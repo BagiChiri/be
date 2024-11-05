@@ -9,8 +9,6 @@ CREATE USER IF NOT EXISTS `operator`@`%` IDENTIFIED WITH mysql_native_password B
 GRANT SELECT, INSERT, UPDATE, DELETE, SHOW VIEW ON `point_of_sale_db`.* TO `operator`@`%`;
 FLUSH PRIVILEGES;
 
-GRANT ALTER ON point_of_sale_db.* TO 'operator'@'localhost';
-FLUSH PRIVILEGES;
 
 #
 # SHOW GRANTS FOR 'admin'@'%';
