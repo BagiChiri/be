@@ -1,0 +1,232 @@
+To create a **simple multi-tenant architecture** using the **database-per-tenant** approach in Spring Boot, we can follow these steps. The idea is to dynamically switch between data sources (databases) based on the tenant context (e.g., a request attribute or subdomain). Here’s how to implement it:
+
+### 1. Project Setup
+First, we’ll need a Spring Boot project with the following dependencies:
+- **Spring Web** (for REST API)
+- **Spring Data JPA** (for database access)
+- **Spring Security** (optional, for authentication)
+- **HikariCP** (for connection pooling)
+- **MySQL Driver** (or other database drivers)
+
+You can start by generating a Spring Boot project using [Spring Initializr](https://start.spring.io/), including the above dependencies.
+
+### 2. Tenant Identification
+We need a way to identify tenants. Let's assume that each request contains a `X-Tenant-ID` header specifying which tenant's database to use. This can be extended to use subdomains, URL paths, or even session-based tenant identifiers.
+
+### 3. Configure Dynamic DataSource Routing
+We will configure a dynamic `DataSource` routing mechanism. Here’s how you can do it:
+
+#### 3.1 Create a `TenantContext` to Hold the Tenant ID
+```java
+public class TenantContext {
+
+    private static final ThreadLocal<String> currentTenant = new ThreadLocal<>();
+
+    public static void setTenantId(String tenantId) {
+        currentTenant.set(tenantId);
+    }
+
+    public static String getTenantId() {
+        return currentTenant.get();
+    }
+
+    public static void clear() {
+        currentTenant.remove();
+    }
+}
+```
+This stores the current tenant in a `ThreadLocal` variable, ensuring tenant-specific data is isolated per request.
+
+#### 3.2 Create a `TenantAwareRoutingDataSource`
+This `DataSource` will route queries to the appropriate database based on the tenant ID.
+
+```java
+import org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource;
+
+public class TenantAwareRoutingDataSource extends AbstractRoutingDataSource {
+
+    @Override
+    protected Object determineCurrentLookupKey() {
+        return TenantContext.getTenantId();
+    }
+}
+```
+`TenantAwareRoutingDataSource` uses `TenantContext` to get the current tenant and switches the data source accordingly.
+
+#### 3.3 Configure DataSources in `DataSourceConfig`
+This configuration will map tenants to their respective databases.
+
+```java
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
+
+import javax.sql.DataSource;
+import java.util.HashMap;
+import java.util.Map;
+
+@Configuration
+public class DataSourceConfig {
+
+    @Bean
+    public DataSource dataSource() {
+        TenantAwareRoutingDataSource routingDataSource = new TenantAwareRoutingDataSource();
+
+        Map<Object, Object> dataSources = new HashMap<>();
+
+        // Here, you can manually configure data sources for each tenant
+        dataSources.put("tenant1", createDataSource("jdbc:mysql://localhost:3306/tenant1_db", "root", "password"));
+        dataSources.put("tenant2", createDataSource("jdbc:mysql://localhost:3306/tenant2_db", "root", "password"));
+
+        routingDataSource.setTargetDataSources(dataSources);
+        routingDataSource.setDefaultTargetDataSource(createDataSource("jdbc:mysql://localhost:3306/default_db", "root", "password"));
+
+        return routingDataSource;
+    }
+
+    private DataSource createDataSource(String url, String username, String password) {
+        DriverManagerDataSource dataSource = new DriverManagerDataSource();
+        dataSource.setUrl(url);
+        dataSource.setUsername(username);
+        dataSource.setPassword(password);
+        return dataSource;
+    }
+}
+```
+This defines data sources for multiple tenants (`tenant1` and `tenant2`). In a production environment, you might load tenant configurations from a database or environment variables.
+
+### 4. Tenant Resolution Middleware
+We’ll create an interceptor to extract the tenant ID from incoming requests (e.g., from headers) and set it in `TenantContext`.
+
+```java
+import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.HandlerInterceptor;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+@Component
+public class TenantInterceptor implements HandlerInterceptor {
+
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        String tenantId = request.getHeader("X-Tenant-ID");
+
+        if (tenantId != null) {
+            TenantContext.setTenantId(tenantId);
+        }
+
+        return true;
+    }
+
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
+        TenantContext.clear();
+    }
+}
+```
+
+### 5. Register the Interceptor in `WebConfig`
+You need to register the `TenantInterceptor` so that it intercepts every incoming request.
+
+```java
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+@Configuration
+public class WebConfig implements WebMvcConfigurer {
+
+    @Autowired
+    private TenantInterceptor tenantInterceptor;
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(tenantInterceptor);
+    }
+}
+```
+
+### 6. Entity Example and JPA Repository
+You can now define your entities, and they will automatically be routed to the appropriate tenant’s database.
+
+#### Sample Entity
+```java
+import javax.persistence.Entity;
+import javax.persistence.Id;
+
+@Entity
+public class Product {
+
+    @Id
+    private Long id;
+    private String name;
+    private Double price;
+
+    // Getters and setters
+}
+```
+
+#### Sample Repository
+```java
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface ProductRepository extends JpaRepository<Product, Long> {
+}
+```
+
+### 7. Sample Controller for Testing
+Here’s a simple REST controller that interacts with tenant-specific data.
+
+```java
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/products")
+public class ProductController {
+
+    @Autowired
+    private ProductRepository productRepository;
+
+    @GetMapping
+    public List<Product> getAllProducts() {
+        return productRepository.findAll();
+    }
+
+    @PostMapping
+    public Product createProduct(@RequestBody Product product) {
+        return productRepository.save(product);
+    }
+}
+```
+
+### 8. Running the Application
+To test this:
+1. Start the Spring Boot application.
+2. Create a database for each tenant (`tenant1_db`, `tenant2_db`).
+3. Ensure that the `X-Tenant-ID` header is passed in your requests, for example:
+   - Use `curl` or Postman to make a request with `X-Tenant-ID: tenant1` for `tenant1_db`.
+   - Use `X-Tenant-ID: tenant2` for `tenant2_db`.
+
+For example, using `curl`:
+```bash
+curl -X GET http://localhost:8080/products -H "X-Tenant-ID: tenant1"
+```
+
+This request will be routed to `tenant1_db`. The data for `tenant1` will be isolated from `tenant2`.
+
+### 9. Optional: Creating Tenants Dynamically
+In a real-world scenario, you would have a signup process where new tenants (businesses) are created. For this, you would:
+- Dynamically add new tenant databases.
+- Update the `TenantAwareRoutingDataSource` to include new tenants as they sign up.
+
+You can manage tenant data in a separate `tenants` database, mapping each tenant ID to its corresponding database connection.
+
+---
+
+This setup is a basic demonstration of how to implement multi-tenancy with the **database-per-tenant** approach. As the application grows, you can add features like connection pooling, tenant-specific migrations, and more automated tenant provisioning.
