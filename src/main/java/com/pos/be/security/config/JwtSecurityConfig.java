@@ -22,10 +22,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
@@ -43,6 +41,7 @@ import java.util.UUID;
 @EnableMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
 public class JwtSecurityConfig {
+    private static final String EXPECTED_ISSUER = "http://localhost:8080/pos";
     private final UserRepository userRepository;
 
     @Bean
@@ -151,9 +150,14 @@ public class JwtSecurityConfig {
 
     @Bean
     public JwtDecoder jwtDecoder(RSAKey rsaKey) throws JOSEException {
-        return NimbusJwtDecoder.withPublicKey(
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withPublicKey(
                 rsaKey.toRSAPublicKey()
         ).build();
+
+        OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(EXPECTED_ISSUER);
+        decoder.setJwtValidator(withIssuer);
+
+        return decoder;
     }
 
     @Bean

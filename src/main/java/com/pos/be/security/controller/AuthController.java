@@ -28,7 +28,7 @@ public class AuthController {
         return authenticationService.register(user);
     }
 
-    @PreAuthorize("{hasRole('ADMIN'), hasAuthority('ROLE_READ_PRIVILEGE')}")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/role")
     public String role() {
         return "has Role";
