@@ -77,6 +77,7 @@ public class JwtSecurityConfig {
                                 )
                         )
                 )
+                .cors(Customizer.withDefaults())
                 .build();
     }
 
