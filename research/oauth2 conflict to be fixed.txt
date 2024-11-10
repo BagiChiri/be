@@ -1,0 +1,88 @@
+There are a few areas where issues might be occurring that could lead to a `401 Unauthorized` response from your backend even though the JWT is being passed in your request. Here are some things to check and suggestions for resolving the issue:
+
+### 1. **JWT Expiry Validator Setup**
+   In your `jwtDecoder` bean, you are incorrectly setting the expiry validator. You are passing the current time (`Instant.now().toString()`) as the issuer in the second validator, which is incorrect. You don't need to manually handle the expiration validation because Spring Security automatically handles it.
+
+   **Fix**: Remove the expiry validator that you are manually creating. The JWT itself contains the `exp` (expiration) claim, and Spring Security already validates it. Here's the corrected `JwtDecoder` bean:
+
+   ```java
+   @Bean
+   public JwtDecoder jwtDecoder(RSAKey rsaKey) throws JOSEException {
+       NimbusJwtDecoder decoder = NimbusJwtDecoder.withPublicKey(
+               rsaKey.toRSAPublicKey()
+       ).build();
+
+       // Create a validator for the expected issuer
+       OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(EXPECTED_ISSUER);
+
+       // Apply the validator to the JwtDecoder
+       decoder.setJwtValidator(withIssuer);  // Expiry validation is automatic
+
+       return decoder;
+   }
+   ```
+
+### 2. **Filter Configuration**
+   You are using `JwtCookieAuthenticationFilter` to read the JWT from cookies, but you may have a conflict between this and Spring Security's `oauth2ResourceServer` JWT support. Since you're adding your custom filter for cookie authentication, you need to make sure the default `oauth2ResourceServer` configuration doesn't override or conflict with it.
+
+   **Fix**: Ensure your custom filter is executed before `UsernamePasswordAuthenticationFilter`, as you're already doing. However, you might want to **remove** the `oauth2ResourceServer` part if you're solely relying on cookies for authentication:
+
+   ```java
+   @Bean
+   public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
+       return httpSecurity.authorizeHttpRequests(
+                       auth -> auth
+                               .requestMatchers("/login").permitAll()
+                               .requestMatchers("/register").permitAll()
+                               .requestMatchers("/active-users").permitAll()
+                               .anyRequest().authenticated()
+               )
+               .httpBasic(Customizer.withDefaults())
+               .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+               .csrf(AbstractHttpConfigurer::disable)
+               .headers(headersConfigurer -> headersConfigurer.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
+               .addFilterBefore(new JwtCookieAuthenticationFilter(applicationContext.getBean("jwtDecoder", JwtDecoder.class)),
+                       UsernamePasswordAuthenticationFilter.class)
+               .cors(Customizer.withDefaults())
+               .build();
+   }
+   ```
+
+### 3. **JWT Cookie Format**
+   Ensure that the JWT cookie is being set properly and that the `token` in the cookie is valid. Verify that:
+   - The JWT is correctly signed and not expired.
+   - The `token` cookie is being sent to your backend with the request.
+
+   You can add logging to print out the token and its details to verify that it’s being received correctly in `JwtCookieAuthenticationFilter`.
+
+### 4. **Spring Security Context Issue**
+   Make sure the `JwtCookieAuthenticationFilter` is correctly setting the `SecurityContext`. Here's a relevant snippet from your filter, which looks good but you can add debugging/logging:
+
+   ```java
+   if (!token.equals("")) {
+       // Decode the JWT
+       Jwt decodedJwt = jwtDecoder.decode(token);
+       System.out.println("decodedJwt: " + decodedJwt);  // Log the decoded token
+
+       // Extract roles (authorities) from the JWT claims
+       List<SimpleGrantedAuthority> authorities = extractAuthorities(decodedJwt);
+
+       // Create the Authentication object
+       Authentication authentication = new UsernamePasswordAuthenticationToken(
+               decodedJwt.getSubject(), null, authorities
+       );
+
+       // Set authentication to the security context
+       SecurityContextHolder.getContext().setAuthentication(authentication);
+   }
+   ```
+
+   If the token is being decoded but no authorities are being set or if the token is invalid, you'll see it in the logs.
+
+### 5. **Security Context Handling**
+   Ensure that the security context is being propagated correctly through the filter chain. If you're using Spring's default `SecurityContextHolder` strategy (which is `ThreadLocal`), it should work unless there are threading issues or misconfigurations in the application.
+
+### Debugging Steps:
+- Add more logging in the `JwtCookieAuthenticationFilter` to verify the token, decoded JWT, authorities, and authentication object.
+- Test your JWT independently to ensure it is correctly signed, not expired, and contains the right claims (`roles` for example).
+- Ensure the `cookie` containing the JWT is being sent in the request. You can check this using browser dev tools or logging in the filter.

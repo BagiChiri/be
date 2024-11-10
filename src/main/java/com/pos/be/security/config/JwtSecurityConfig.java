@@ -7,6 +7,7 @@ import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.pos.be.entity.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,7 +20,6 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
@@ -29,6 +29,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtGra
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -37,6 +38,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPublicKey;
+import java.time.Instant;
 import java.util.UUID;
 
 @Configuration
@@ -45,6 +47,7 @@ import java.util.UUID;
 public class JwtSecurityConfig {
     private static final String EXPECTED_ISSUER = "http://localhost:8080/pos";
     private final UserRepository userRepository;
+    private final ApplicationContext applicationContext;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
@@ -52,6 +55,7 @@ public class JwtSecurityConfig {
                         auth -> auth
                                 .requestMatchers("/login").permitAll()
                                 .requestMatchers("/register").permitAll()
+                                .requestMatchers("/active-users").permitAll()
                                 .anyRequest().authenticated()
                 )
                 .httpBasic(
@@ -76,7 +80,7 @@ public class JwtSecurityConfig {
                                         jwtAuthenticationConverter()
                                 )
                         )
-                )
+                ).addFilterBefore(new JwtCookieAuthenticationFilter(applicationContext.getBean("jwtDecoder", JwtDecoder.class)), UsernamePasswordAuthenticationFilter.class)
                 .cors(Customizer.withDefaults())
                 .build();
     }
@@ -88,6 +92,7 @@ public class JwtSecurityConfig {
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
                         .allowedMethods("*")
+                        .allowCredentials(true)
                         .allowedOrigins("http://localhost:3000");
             }
         };
@@ -112,7 +117,7 @@ public class JwtSecurityConfig {
     @Bean
     public UserDetailsService userDetailsService() {
         return username -> userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));//todo:hide this exception to avoid creation of user by hacker
+                .orElseThrow(() -> new IllegalArgumentException("Invalid Credentials"));//todo:hide this exception to avoid creation of user by hacker
     }
 
     @Bean
@@ -169,7 +174,9 @@ public class JwtSecurityConfig {
         ).build();
 
         OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(EXPECTED_ISSUER);
+//        OAuth2TokenValidator<Jwt> withExpiry = JwtValidators.createDefaultWithIssuer(Instant.now().toString());
         decoder.setJwtValidator(withIssuer);
+//        decoder.setJwtValidator(withExpiry);
 
         return decoder;
     }

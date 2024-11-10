@@ -49,7 +49,7 @@ public class AuthenticationService {
         // Assign roles (querying from database)
         if (user.getRoles() == null || user.getRoles().isEmpty()) {
             Role defaultRole = roleRepository.findById(1)
-                    .orElseThrow(() -> new RoleNotFoundException("Default role not found"));
+                    .orElseThrow(() -> new RoleNotFoundException("Default role not found"));// TODO: 11/10/2024 remove default role
             user.setRoles(new HashSet<>(Collections.singletonList(defaultRole)));
         }
 
@@ -64,7 +64,7 @@ public class AuthenticationService {
                 .issuer("http://localhost:8080/pos")
                 .issuedAt(Instant.now())
                 .subject(authentication.getName())
-                .expiresAt(Instant.now().plusSeconds(60 * 15))
+                .expiresAt(Instant.now().plusSeconds(15 * 60))
                 .claim("roles", createClaims(authentication))
                 .build();
 
