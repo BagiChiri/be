@@ -83,6 +83,7 @@ public class JwtSecurityConfig {
                 ).addFilterBefore(new JwtCookieAuthenticationFilter(applicationContext.getBean("jwtDecoder", JwtDecoder.class)), UsernamePasswordAuthenticationFilter.class)
                 .cors(Customizer.withDefaults())
                 .build();
+
     }
 
     @Bean
