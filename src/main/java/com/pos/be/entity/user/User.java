@@ -1,7 +1,6 @@
-package com.pos.be.entity;
+package com.pos.be.entity.user;
 
 import jakarta.persistence.*;
-import jakarta.transaction.Transactional;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;

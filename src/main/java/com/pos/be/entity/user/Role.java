@@ -1,6 +1,5 @@
-package com.pos.be.entity;
+package com.pos.be.entity.user;
 
-import com.pos.be.entity.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,5 +23,4 @@ public class Role {
     @ManyToMany(mappedBy = "roles")
     private Set<User> users = new HashSet<>();
 
-    // Getters and Setters
 }

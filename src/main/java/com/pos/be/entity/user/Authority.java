@@ -1,4 +1,4 @@
-package com.pos.be.entity;
+package com.pos.be.entity.user;
 
 import jakarta.persistence.*;
 import lombok.Getter;

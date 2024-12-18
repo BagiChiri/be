@@ -65,7 +65,7 @@ When a user signs up, a new tenant is created:
    - For each incoming request, use a **TenantResolver** to identify the tenant.
    - Route the request to the appropriate database or schema based on the tenant.
 
-3. **Superadmin com.pos.be.entity.Role**:
+3. **Superadmin com.pos.be.entity.user.Role**:
    - The superadmin role for each tenant is responsible for managing their business.
    - They can create users, manage inventory, and handle transactions within their tenant context.
 

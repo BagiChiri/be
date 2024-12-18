@@ -1,11 +1,16 @@
 package com.pos.be.security;
 
-import com.pos.be.entity.*;
+import com.pos.be.entity.user.User;
+import com.pos.be.repository.user.UserRepository;
+import com.pos.be.security.controller.AuthResponse;
+import com.pos.be.security.controller.LoginRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationContext;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
@@ -14,46 +19,46 @@ import org.springframework.stereotype.Service;
 
 import javax.management.relation.RoleNotFoundException;
 import java.time.Instant;
-import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class AuthenticationService {
 
-    private UserRepository userRepository;
-    private ApplicationContext applicationContext;
+    private final UserRepository userRepository;
+    private final ApplicationContext applicationContext;
+    private final AuthenticationManager authenticationManager;
 
-    private RoleRepository roleRepository;
+    public AuthResponse authenticate(LoginRequest loginRequest) {
+        try {
+            Authentication authentication = authenticationManager
+                    .authenticate(
+                            new UsernamePasswordAuthenticationToken(
+                                    loginRequest.getUsername(),
+                                    loginRequest.getPassword())
+                    );
 
-    public AuthenticationService(ApplicationContext applicationContext, UserRepository userRepository, RoleRepository roleRepository) {
-        this.applicationContext = applicationContext;
-        this.roleRepository = roleRepository;
-        this.userRepository = userRepository;
-    }
-
-    public String authenticate(Authentication authentication) {
-        return createToken(authentication);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            String token = this.createToken(authentication);
+            return new AuthResponse("Success", loginRequest.getUsername(), token);
+        } catch (Exception e) {
+            throw e;
+        }
     }
 
     public String register(User user) throws RoleNotFoundException {
-        // Check if the username already exists
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
             throw new IllegalArgumentException("Username already exists!");
         }
 
-        // Encode the user's password
         PasswordEncoder passwordEncoder = applicationContext.getBean(PasswordEncoder.class);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setEnabled(true);
 
-        // Assign roles (querying from database)
         if (user.getRoles() == null || user.getRoles().isEmpty()) {
-            Role defaultRole = roleRepository.findById(1)
-                    .orElseThrow(() -> new RoleNotFoundException("Default role not found"));// TODO: 11/10/2024 remove default role
-            user.setRoles(new HashSet<>(Collections.singletonList(defaultRole)));
+            throw new RoleNotFoundException("Default role not found");// TODO: 11/10/2024 remove default role
         }
 
-        // Save the user to the database
         userRepository.save(user);
         return "User registered successfully!";
     }

@@ -1,14 +1,13 @@
 package com.pos.be.security.controller;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @AllArgsConstructor
 @Setter
 @Getter
+@NoArgsConstructor
 public class AuthResponse {
-//    private String token;
+    private String message;
     private String username;
+    private String token;
 }

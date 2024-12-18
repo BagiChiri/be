@@ -5,11 +5,12 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
-import com.pos.be.entity.UserRepository;
+import com.pos.be.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
@@ -38,7 +39,6 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPublicKey;
-import java.time.Instant;
 import java.util.UUID;
 
 @Configuration
@@ -53,14 +53,20 @@ public class JwtSecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity.authorizeHttpRequests(
                         auth -> auth
-                                .requestMatchers("/login").permitAll()
+                                .requestMatchers("/api/auth/login").permitAll()
                                 .requestMatchers("/register").permitAll()
                                 .requestMatchers("/active-users").permitAll()
+                                .requestMatchers("/api/auth/validate-token").permitAll()
+                                .requestMatchers("/products/detail/{id}").permitAll()
+                                .requestMatchers("/products").permitAll()
+                                .requestMatchers(HttpMethod.PUT, "/products/{id}").permitAll()
+                                .requestMatchers(HttpMethod.DELETE, "/products/{id}").permitAll()
+
                                 .anyRequest().authenticated()
                 )
-                .httpBasic(
-                        Customizer.withDefaults()
-                )
+//                .httpBasic(
+//                        Customizer.withDefaults()
+//                )
                 .sessionManagement(
                         session -> session.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS
@@ -98,6 +104,7 @@ public class JwtSecurityConfig {
             }
         };
     }
+
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
@@ -175,9 +182,7 @@ public class JwtSecurityConfig {
         ).build();
 
         OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(EXPECTED_ISSUER);
-//        OAuth2TokenValidator<Jwt> withExpiry = JwtValidators.createDefaultWithIssuer(Instant.now().toString());
         decoder.setJwtValidator(withIssuer);
-//        decoder.setJwtValidator(withExpiry);
 
         return decoder;
     }

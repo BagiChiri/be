@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Set;
 
-@RestController
+//@RestController
 public class UserController {
 
     private final ActiveUserStore activeUserStore;
