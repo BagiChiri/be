@@ -8,11 +8,15 @@ import com.pos.be.repository.product.ProductRepository;
 import com.pos.be.service.category.CategoryService;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -64,31 +68,7 @@ public class ProductService {
         );
         return ResponseEntity.ok(productDTOS);
     }
-
-//    public Object getAll() {
-//        List<ProductDTO> productDTOS = new ArrayList<>();
-//        productRepository.findAll().forEach(
-//                product -> {
-//                    String categories;
-//                    Iterable iterable = product.getCategories();
-//                    categoryRepository.findAllById(iterable).forEach(
-//                            category -> {
-//                                categories = categories + category.toString()
-//                            }
-//                    );
-//                    ProductData productData = new ProductData(
-//                            product.getId(),
-//                            product.getName(),
-//                            product.getDescription(),
-//                            product.getPrice(),
-//                            product.getCategories()
-//                    )
-//                }
-//        );
-
-//        return productRepository.getProductIntro();
-//    }
-
+//
     public ResponseEntity<?> update(
             ProductDTO dto
     ) {
@@ -112,13 +92,44 @@ public class ProductService {
             return ResponseEntity.ok("Product With Id: " + dto.getId() + " Doesn't Exists.");
         }
     }
-
+//
     public ResponseEntity<?> delete(
             Long id
     ) {
         productRepository.deleteById(id);
         return ResponseEntity.ok(id);
     }
+
+    public Page<ProductDTO> getProducts(String name, Pageable pageable) {
+        Page<Object[]> rawPage = productRepository.findRawProductData(name, pageable);
+        List<Object[]> rawData = rawPage.getContent();
+
+        List<ProductDTO> products = rawData.stream().map(row -> {
+            Long productId = ((Number) row[0]).longValue();
+            String productName = (String) row[1];
+            String description = (String) row[2];
+            Double price = (Double) row[3];
+            Integer quantity = (Integer) row[4];
+            String categoryIdsRaw = (String) row[5];
+
+            Set<Long> categoryIds = Arrays.stream(categoryIdsRaw.split(","))
+                    .map(Long::valueOf)
+                    .collect(Collectors.toSet());
+
+            return ProductDTO.builder()
+                    .id(productId)
+                    .name(productName)
+                    .description(description)
+                    .price(price)
+                    .quantity(quantity)
+                    .categoryIds(categoryIds)
+                    .build();
+        }).toList();
+
+        return new PageImpl<>(products, pageable, rawPage.getTotalElements());
+    }
+
+
 
     private ProductDTO convertToDTO(
             Product product
@@ -132,7 +143,7 @@ public class ProductService {
                 .name(product.getName())
                 .description(product.getDescription())
                 .price(product.getPrice())
-                .categoryIds(categoryIds)
+//                .categoryIds(categoryIds)
                 .build();
     }
 
@@ -140,9 +151,9 @@ public class ProductService {
             ProductDTO productDTO
     ) {
         Set<Category> categorySet = new HashSet<>();
-        categoryService.findAllByIds(productDTO.getCategoryIds()).forEach(
-                categorySet::add
-        );
+//        categoryService.findAllByIds(productDTO.getCategoryIds()).forEach(
+//                categorySet::add
+//        );
         return Product.builder()
                 .name(productDTO.getName())
                 .description(productDTO.getDescription())

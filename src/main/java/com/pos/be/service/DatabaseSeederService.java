@@ -1,62 +1,212 @@
 package com.pos.be.service;
 
 import com.pos.be.entity.category.Category;
+import com.pos.be.entity.customer.Customer;
+import com.pos.be.entity.order.Orders;
+import com.pos.be.entity.order.OrderDetail;
 import com.pos.be.entity.product.CustomOptions;
 import com.pos.be.entity.product.Product;
+import com.pos.be.entity.shipper.Shipper;
+import com.pos.be.entity.supplier.Supplier;
+import com.pos.be.entity.user.Role;
+import com.pos.be.entity.user.User;
 import com.pos.be.repository.category.CategoryRepository;
+import com.pos.be.repository.customer.CustomerRepository;
+import com.pos.be.repository.order.OrderDetailRepository;
+import com.pos.be.repository.order.OrdersRepository;
 import com.pos.be.repository.product.CustomOptionsRepository;
 import com.pos.be.repository.product.ProductRepository;
+import com.pos.be.repository.shipper.ShipperRepository;
+import com.pos.be.repository.supplier.SupplierRepository;
+import com.pos.be.repository.user.RoleRepository;
+import com.pos.be.repository.user.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 //@Service
 public class DatabaseSeederService {
-    private final CategoryRepository categoryRepository;
-    private final ProductRepository productRepository;
-    private final CustomOptionsRepository customOptionsRepository;
 
-    public DatabaseSeederService(
-            CategoryRepository categoryRepository,
-            ProductRepository productRepository,
-            CustomOptionsRepository customOptionsRepository) {
-        this.categoryRepository = categoryRepository;
-        this.productRepository = productRepository;
-        this.customOptionsRepository = customOptionsRepository;
-    }
+    @Autowired
+    private UserRepository userRepository;
 
+    @Autowired
+    private RoleRepository roleRepository;
+
+    @Autowired
+    private CustomerRepository customerRepository;
+
+    @Autowired
+    private ShipperRepository shipperRepository;
+
+    @Autowired
+    private ProductRepository productRepository;
+
+    @Autowired
+    private SupplierRepository supplierRepository;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
+
+    @Autowired
+    private OrdersRepository ordersRepository;
+
+    @Autowired
+    private OrderDetailRepository orderDetailRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private CustomOptionsRepository customOptionsRepository;
+
+    private final Random random = new Random();
+
+    @Transactional
     public void seedDatabase() {
-        seedCategories();
-        seedProducts();
+        // Insert specific Users
+        insertUsers();
+
+        // Insert 12,000 records for other entities
+        insertCustomers();
+        insertShippers();
+        insertProducts();
+        insertSuppliers();
+        insertCategories();
+        insertOrdersAndDetails();
         seedProductCategoryRelationships();
         seedCustomOptions();
     }
 
-    private void seedCategories() {
-        List<Category> categories = new ArrayList<>();
-        for (int i = 1; i <= 12000; i++) {
-            categories.add(new Category(null, "Category " + i));
-        }
-        categoryRepository.saveAll(categories);
-        System.out.println("12,000 categories inserted.");
+
+    private void insertUsers() {
+        Role adminRole = roleRepository.save(new Role("ADMIN"));
+        Role salespersonRole = roleRepository.save(new Role("SALESPERSON"));
+
+        User admin = new User();
+        admin.setFirstName("Admin");
+        admin.setLastName("User");
+        admin.setUsername("admin");
+        admin.setPassword(passwordEncoder.encode("admin123"));
+        admin.setEnabled(true);
+        admin.getRoles().add(adminRole);
+
+        User salesperson1 = new User();
+        salesperson1.setFirstName("John");
+        salesperson1.setLastName("Doe");
+        salesperson1.setUsername("john.doe");
+        salesperson1.setPassword(passwordEncoder.encode("password"));
+        salesperson1.setEnabled(true);
+        salesperson1.getRoles().add(salespersonRole);
+
+        User salesperson2 = new User();
+        salesperson2.setFirstName("Jane");
+        salesperson2.setLastName("Smith");
+        salesperson2.setUsername("jane.smith");
+        salesperson2.setPassword(passwordEncoder.encode("password"));
+        salesperson2.setEnabled(true);
+        salesperson2.getRoles().add(salespersonRole);
+
+        userRepository.saveAll(List.of(admin, salesperson1, salesperson2));
     }
 
-    private void seedProducts() {
-        Random random = new Random();
+    private void insertCustomers() {
+        List<Customer> customers = new ArrayList<>();
+        IntStream.range(0, 12000).forEach(i -> {
+            Customer customer = new Customer();
+            customer.setName("Customer " + i);
+            customer.setAddress("Address " + i);
+            customer.setCity("City " + i);
+            customer.setPostalCode("1000" + i);
+            customer.setCountry("Country " + (i % 100));
+            customer.setPhoneNumber("123456789" + i);
+            customers.add(customer);
+        });
+        customerRepository.saveAll(customers);
+    }
+
+    private void insertShippers() {
+        List<Shipper> shippers = new ArrayList<>();
+        IntStream.range(0, 12000).forEach(i -> {
+            Shipper shipper = new Shipper();
+            shipper.setShipperName("Shipper " + i);
+            shipper.setPhoneNumber("987654321" + i);
+            shippers.add(shipper);
+        });
+        shipperRepository.saveAll(shippers);
+    }
+
+    private void insertProducts() {
         List<Product> products = new ArrayList<>();
-        for (int i = 1; i <= 12000; i++) {
-            products.add(
-                    Product.builder()
-                            .name("Product " + i)
-                            .description("Description for Product " + i)
-                            .price(random.nextDouble() * 100)
-                            .quantity(random.nextInt(50) + 1)
-                            .build()
-            );
-        }
+        IntStream.range(0, 12000).forEach(i -> {
+            Product product = new Product();
+            product.setName("Product " + i);
+            product.setDescription("Description for Product " + i);
+            product.setPrice(random.nextDouble() * 100);
+            product.setQuantity(random.nextInt(1000));
+            products.add(product);
+        });
         productRepository.saveAll(products);
-        System.out.println("12,000 products inserted.");
+    }
+
+    private void insertSuppliers() {
+        List<Supplier> suppliers = new ArrayList<>();
+        IntStream.range(0, 12000).forEach(i -> {
+            Supplier supplier = new Supplier();
+            supplier.setName("Supplier " + i);
+            supplier.setContactName("Contact " + i);
+            supplier.setAddress("Address " + i);
+            supplier.setCity("City " + i);
+            supplier.setPostalCode("1000" + i);
+            supplier.setCountry("Country " + (i % 100));
+            supplier.setPhoneNumber("123456789" + i);
+            suppliers.add(supplier);
+        });
+        supplierRepository.saveAll(suppliers);
+    }
+
+    private void insertCategories() {
+        List<Category> categories = new ArrayList<>();
+        IntStream.range(0, 12000).forEach(i -> {
+            Category category = new Category();
+            category.setName("Category " + i);
+            categories.add(category);
+        });
+        categoryRepository.saveAll(categories);
+    }
+
+    private void insertOrdersAndDetails() {
+        List<Orders> orders = new ArrayList<>();
+        List<OrderDetail> orderDetails = new ArrayList<>();
+
+        List<User> users = userRepository.findAll();
+        List<Customer> customers = customerRepository.findAll();
+        List<Shipper> shippers = shipperRepository.findAll();
+        List<Product> products = productRepository.findAll();
+
+        IntStream.range(0, 12000).forEach(i -> {
+            Orders order = new Orders();
+            order.setUser(users.get(random.nextInt(users.size())));
+            order.setCustomer(customers.get(random.nextInt(customers.size())));
+            order.setShipper(shippers.get(random.nextInt(shippers.size())));
+            order.setOrderDate(new Date());
+
+            orders.add(order);
+
+            OrderDetail detail = new OrderDetail();
+            detail.setOrders(order);
+            detail.setProduct(products.get(random.nextInt(products.size())));
+            detail.setQuantity(random.nextInt(10) + 1);
+
+            orderDetails.add(detail);
+        });
+
+        ordersRepository.saveAll(orders);
+        orderDetailRepository.saveAll(orderDetails);
     }
 
     private void seedProductCategoryRelationships() {
@@ -107,4 +257,5 @@ public class DatabaseSeederService {
         customOptionsRepository.saveAll(customOptions);
         System.out.println("12,000 custom options inserted.");
     }
+
 }

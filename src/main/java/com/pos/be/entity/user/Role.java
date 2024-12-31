@@ -2,6 +2,7 @@ package com.pos.be.entity.user;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.HashSet;
@@ -11,6 +12,7 @@ import java.util.Set;
 @Table(name = "roles")
 @Getter
 @Setter
+@NoArgsConstructor
 public class Role {
 
     @Id
@@ -23,4 +25,7 @@ public class Role {
     @ManyToMany(mappedBy = "roles")
     private Set<User> users = new HashSet<>();
 
+    public Role(String name) {
+        this.name = name;
+    }
 }

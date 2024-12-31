@@ -6,6 +6,7 @@ import com.pos.be.security.controller.AuthResponse;
 import com.pos.be.security.controller.LoginRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationContext;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -16,6 +17,7 @@ import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import javax.management.relation.RoleNotFoundException;
 import java.time.Instant;
@@ -40,7 +42,7 @@ public class AuthenticationService {
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
             String token = this.createToken(authentication);
-            return new AuthResponse("Success", loginRequest.getUsername(), token);
+            return new AuthResponse(loginRequest.getUsername(), token); //todo: get username from context
         } catch (Exception e) {
             throw e;
         }

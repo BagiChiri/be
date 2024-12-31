@@ -43,7 +43,6 @@ public class AuthController {
             String token = authHeader.substring(7); // Remove "Bearer " prefix
             Jwt decodedJwt = jwtDecoder.decode(token);
 
-            // Example: Include token details in the response if valid
             return ResponseEntity.ok()
                     .body("Token is valid. Subject: " + decodedJwt.getSubject());
         } catch (JwtException e) {
@@ -59,7 +58,6 @@ public class AuthController {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
             if (authentication != null) {
-
                 System.out.println("Authenticated user: " + authentication.getName());
                 System.out.println("Authorities: " + authentication.getAuthorities());
                 System.out.println("User details: " + authentication.getDetails());

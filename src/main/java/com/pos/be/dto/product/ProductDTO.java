@@ -4,17 +4,14 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.Set;
 
 @Getter
 @Setter
 @Builder
-@AllArgsConstructor
+@NoArgsConstructor
 public class ProductDTO {
     @Positive(message = "Product Id Must Be Positive.")
     private Long id;
@@ -36,4 +33,14 @@ public class ProductDTO {
     @NotNull(message = "Category Name Must Not Be Null.")
     @NotBlank(message = "Category Name Must Not Be Blank.")
     private Set<Long> categoryIds;
+
+    public ProductDTO(Long id, String name, String description, Double price, Integer quantity, Set<Long> categoryIds) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.price = price;
+        this.quantity = quantity;
+        this.categoryIds = categoryIds;
+    }
 }
+

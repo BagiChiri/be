@@ -3,9 +3,12 @@ package com.pos.be.controller.product;
 import com.pos.be.dto.product.ProductDTO;
 import com.pos.be.service.product.ProductService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -23,12 +26,13 @@ public class ProductController {
         return productService.save(request);
     }
 
-    @GetMapping
-    public Object get(
-            Pageable pageable
-    ) {
-        return productService.getAll(pageable);
+    @GetMapping("/by_name")
+    public Page<ProductDTO> get(
+            @RequestParam(required = false) String query,
+            Pageable pageable) {
+        return productService.getProducts(query, pageable);
     }
+
 
     @GetMapping("/detail/{id}")
     public ResponseEntity<?> getDetailedProduct(
@@ -37,7 +41,7 @@ public class ProductController {
         return productService.getDetailedProduct(id);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/by_id/{id}")
     public ResponseEntity<?> getById(
             @PathVariable Long id
     ) {

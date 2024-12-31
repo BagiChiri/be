@@ -1,6 +1,9 @@
 package com.pos.be.repository.product;
 
 import com.pos.be.entity.product.Product;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
@@ -8,7 +11,10 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface ProductRepository extends CrudRepository<Product, Long>, PagingAndSortingRepository<Product, Long> {
+public interface ProductRepository extends JpaRepository<Product, Long>, CrudRepository<Product, Long>, PagingAndSortingRepository<Product, Long> {
+
+    public Page<Product> findByNameContainingIgnoreCase(String name, Pageable pageable);
+
     @Query(
             value = "select " +
                     "    p.product_id, " +
@@ -29,10 +35,57 @@ public interface ProductRepository extends CrudRepository<Product, Long>, Paging
                     "group by p.product_id, p.name, p.description, p.price"
             , nativeQuery = true)
     Object getProductDetailsById(@Param("id") Long id);
+
     @Query(
             """
                     select p.id as id, p.name as name, p.price as price, p.quantity as quantity from Product p where p.id = 3
                     """
     )
     Object getProductIntro();
+
+    @Query(value = """
+            SELECT
+                p.product_id,
+                p.name,
+                p.description,
+                p.price,
+                p.quantity,
+                GROUP_CONCAT(pc.category_id) AS category_ids
+            FROM
+                Product p
+            LEFT JOIN
+                Product_Category pc
+            ON
+                p.product_id = pc.product_id
+            WHERE (:name IS NULL OR p.name LIKE %:name%)
+            GROUP BY
+                p.product_id
+            """,
+            countQuery = """
+            SELECT COUNT(DISTINCT p.product_id)
+            FROM
+                Product p
+            LEFT JOIN
+                Product_Category pc
+            ON
+                p.product_id = pc.product_id
+            WHERE (:name IS NULL OR p.name LIKE %:name%)
+            """,
+            nativeQuery = true)
+    Page<Object[]> findRawProductData(@Param("name") String name, Pageable pageable);
+
 }
+/*
+* ,
+            countQuery = """
+                    SELECT COUNT(DISTINCT p.product_id)
+                    FROM
+                        Product p
+                    LEFT JOIN
+                        Product_Category pc
+                    ON
+                        p.product_id = pc.product_id
+                    WHERE (:name IS NULL OR p.name LIKE %:name%)
+                    """
+* */
+

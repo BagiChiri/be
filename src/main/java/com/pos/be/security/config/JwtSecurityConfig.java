@@ -54,7 +54,7 @@ public class JwtSecurityConfig {
         return httpSecurity.authorizeHttpRequests(
                         auth -> auth
                                 .requestMatchers("/api/auth/login").permitAll()
-                                .requestMatchers("/register").permitAll()
+                                .requestMatchers("/api/auth/register").permitAll()
                                 .requestMatchers("/active-users").permitAll()
                                 .requestMatchers("/api/auth/validate-token").permitAll()
                                 .requestMatchers("/products/detail/{id}").permitAll()
