@@ -82,6 +82,7 @@ public class ProductService {
                     product.setDescription(dto.getDescription());
                     product.setPrice(dto.getPrice());
                     product.setCategories(categories);
+                    product.setQuantity(dto.getQuantity());
                     return product;
                 }
         );
@@ -141,9 +142,10 @@ public class ProductService {
         return ProductDTO.builder()
                 .id(product.getId())
                 .name(product.getName())
+                .quantity(product.getQuantity())
                 .description(product.getDescription())
                 .price(product.getPrice())
-//                .categoryIds(categoryIds)
+                .categoryIds(categoryIds)
                 .build();
     }
 
@@ -151,13 +153,14 @@ public class ProductService {
             ProductDTO productDTO
     ) {
         Set<Category> categorySet = new HashSet<>();
-//        categoryService.findAllByIds(productDTO.getCategoryIds()).forEach(
-//                categorySet::add
-//        );
+        categoryService.findAllByIds(productDTO.getCategoryIds()).forEach(
+                categorySet::add
+        );
         return Product.builder()
                 .name(productDTO.getName())
                 .description(productDTO.getDescription())
                 .price(productDTO.getPrice())
+                .quantity(productDTO.getQuantity())
                 .categories(categorySet)
                 .build();
     }

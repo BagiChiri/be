@@ -4,6 +4,8 @@ import com.pos.be.dto.category.CategoryDTO;
 import com.pos.be.service.category.CategoryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -28,7 +30,7 @@ public class CategoryController {
         }
     }
 
-    @PutMapping
+    @PutMapping//reel about put and patch
     public ResponseEntity<?> update(
             @RequestBody CategoryDTO request
     ) {
@@ -56,9 +58,18 @@ public class CategoryController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(
-            @PathVariable Long id
-    ) {
-        return categoryService.delete(id);
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        try {
+            return categoryService.delete(id);
+        } catch (DataIntegrityViolationException e) {
+            // Handle cases where the foreign key constraint is violated
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("Cannot delete category because it is referenced by other records.");
+        } catch (Exception e) {
+            // Handle other unexpected exceptions
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("An unexpected error occurred while deleting the category.");
+        }
     }
+
 }

@@ -6,6 +6,7 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.pos.be.repository.user.UserRepository;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -21,6 +22,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
@@ -29,6 +31,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.provisioning.UserDetailsManager;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -51,45 +54,23 @@ public class JwtSecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
-        return httpSecurity.authorizeHttpRequests(
+        return httpSecurity
+                .authorizeHttpRequests(
                         auth -> auth
-                                .requestMatchers("/api/auth/login").permitAll()
-                                .requestMatchers("/api/auth/register").permitAll()
-                                .requestMatchers("/active-users").permitAll()
-                                .requestMatchers("/api/auth/validate-token").permitAll()
-                                .requestMatchers("/products/detail/{id}").permitAll()
+                                .requestMatchers("/api/auth/login", "/api/auth/register", "/active-users", "/api/auth/validate-token").permitAll()
                                 .requestMatchers("/products").permitAll()
-                                .requestMatchers(HttpMethod.PUT, "/products/{id}").permitAll()
-                                .requestMatchers(HttpMethod.DELETE, "/products/{id}").permitAll()
-
+                                .requestMatchers(HttpMethod.PUT, "/products/{id}").authenticated()
+                                .requestMatchers(HttpMethod.DELETE, "/products/{id}").authenticated()
                                 .anyRequest().authenticated()
                 )
-//                .httpBasic(
-//                        Customizer.withDefaults()
-//                )
-                .sessionManagement(
-                        session -> session.sessionCreationPolicy(
-                                SessionCreationPolicy.STATELESS
-                        )
-                )
-                .csrf(
-                        AbstractHttpConfigurer::disable
-                )
-                .headers(
-                        httpSecurityHeadersConfigurer -> httpSecurityHeadersConfigurer.frameOptions(
-                                HeadersConfigurer.FrameOptionsConfig::sameOrigin
-                        )
-                )
-                .oauth2ResourceServer(
-                        oauth2ResourceServerCustomizer -> oauth2ResourceServerCustomizer.jwt(
-                                jwtCustomizer -> jwtCustomizer.jwtAuthenticationConverter(
-                                        jwtAuthenticationConverter()
-                                )
-                        )
-                ).addFilterBefore(new JwtCookieAuthenticationFilter(applicationContext.getBean("jwtDecoder", JwtDecoder.class)), UsernamePasswordAuthenticationFilter.class)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .csrf(AbstractHttpConfigurer::disable)
+                .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
+                .exceptionHandling(exception -> exception.authenticationEntryPoint(authenticationEntryPoint()))
+//                .addFilterBefore(new JwtCookieAuthenticationFilter(applicationContext.getBean("jwtDecoder", JwtDecoder.class)), UsernamePasswordAuthenticationFilter.class)
                 .cors(Customizer.withDefaults())
                 .build();
-
     }
 
     @Bean
@@ -118,6 +99,16 @@ public class JwtSecurityConfig {
     }
 
     @Bean
+    public AuthenticationEntryPoint authenticationEntryPoint() {
+        return (request, response, authException) -> {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\": \"Invalid username or password!\"}");
+        };
+    }
+
+
+    @Bean
     public UserDetailsManager userDetailsManager(DataSource dataSource) {
         return new JdbcUserDetailsManager(dataSource);
     }
@@ -125,7 +116,7 @@ public class JwtSecurityConfig {
     @Bean
     public UserDetailsService userDetailsService() {
         return username -> userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid Credentials"));//todo:hide this exception to avoid creation of user by hacker
+                .orElseThrow(() -> new UsernameNotFoundException("Invalid Credentials"));
     }
 
     @Bean
@@ -159,12 +150,8 @@ public class JwtSecurityConfig {
 
     @Bean
     public RSAKey rsaKey(KeyPair keyPair) {
-        return new RSAKey.Builder(
-                (RSAPublicKey) keyPair.getPublic()
-        )
-                .privateKey(
-                        keyPair.getPrivate()
-                )
+        return new RSAKey.Builder((RSAPublicKey) keyPair.getPublic())
+                .privateKey(keyPair.getPrivate())
                 .keyID(UUID.randomUUID().toString())
                 .build();
     }
@@ -172,14 +159,12 @@ public class JwtSecurityConfig {
     @Bean
     public JWKSource<SecurityContext> jwkSource(RSAKey rsaKey) {
         var jwkSet = new JWKSet(rsaKey);
-        return (jWKSelector, context) -> jWKSelector.select(jwkSet);
+        return (jwkSelector, context) -> jwkSelector.select(jwkSet);
     }
 
     @Bean
     public JwtDecoder jwtDecoder(RSAKey rsaKey) throws JOSEException {
-        NimbusJwtDecoder decoder = NimbusJwtDecoder.withPublicKey(
-                rsaKey.toRSAPublicKey()
-        ).build();
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withPublicKey(rsaKey.toRSAPublicKey()).build();
 
         OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(EXPECTED_ISSUER);
         decoder.setJwtValidator(withIssuer);

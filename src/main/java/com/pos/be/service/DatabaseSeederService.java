@@ -171,7 +171,7 @@ public class DatabaseSeederService {
 
     private void insertCategories() {
         List<Category> categories = new ArrayList<>();
-        IntStream.range(0, 12000).forEach(i -> {
+        IntStream.range(0, 120).forEach(i -> {
             Category category = new Category();
             category.setName("Category " + i);
             categories.add(category);

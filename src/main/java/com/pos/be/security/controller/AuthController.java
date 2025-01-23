@@ -5,6 +5,7 @@ import com.pos.be.security.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -28,6 +29,8 @@ public class AuthController {
     ) {
         try {
             return authenticationService.authenticate(loginRequest);
+        } catch (BadCredentialsException e) {
+            throw e;
         } catch (Exception e) {
             throw e;
         }

@@ -4,6 +4,8 @@ import com.pos.be.dto.category.CategoryDTO;
 import com.pos.be.entity.category.Category;
 import com.pos.be.repository.category.CategoryRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -45,13 +47,9 @@ public class CategoryService {
     }
 
     public ResponseEntity<?> getAll() {
-        List<CategoryDTO> categoryDTOList = new ArrayList<>();
-        categoryRepository.findAll().forEach(
-                category -> categoryDTOList.add(
-                        convertToDTO(category)
-                )
+        return ResponseEntity.ok(
+                convertToDTO(categoryRepository.findAll())
         );
-        return ResponseEntity.ok(categoryDTOList);
     }
 
     public ResponseEntity<?> get(Long id) {
@@ -67,23 +65,53 @@ public class CategoryService {
 
     public ResponseEntity<?> delete(Long id) {
         if (categoryRepository.existsById(id)) {
-            categoryRepository.deleteById(id);
-            return ResponseEntity.ok("Category with id: " + id + " deleted successfully.");
+            try {
+                categoryRepository.deleteById(id);
+                return ResponseEntity.ok(id);
+            } catch (DataIntegrityViolationException e) {
+                // Handle foreign key constraint violation
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body("Cannot delete category because products exist under this category.");
+            }
         } else {
-            return ResponseEntity.ok().body("Category doesn't exists");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Category doesn't exist.");
         }
     }
+
 
     public Iterable<Category> findAllByIds(Set<Long> ids) {
         return categoryRepository.findAllById(ids);
     }
 
-    private CategoryDTO convertToDTO(Category category) {
+    private List<CategoryDTO> convertToDTO(Iterable<Category> iterable) {
+        if (iterable == null) {
+            throw new IllegalArgumentException("Iterable cannot be null.");
+        }
+        List<CategoryDTO> categoryDTOList = new ArrayList<>();
+        iterable.forEach(category ->
+                categoryDTOList.add(
+                        CategoryDTO.builder()
+                                .id(category.getId())
+                                .name(category.getName())
+                                .build()
+                )
+        );
+        return categoryDTOList;
+    }
+
+    private CategoryDTO convertToDTO(Category single) {
+        if (single == null) {
+            throw new IllegalArgumentException("Category cannot be null.");
+        }
         return CategoryDTO.builder()
-                .id(category.getId())
-                .name(category.getName())
+                .id(single.getId())
+                .name(single.getName())
                 .build();
     }
+
+
+
 
     private Category convertToEntity(CategoryDTO categoryDTO) {
         return Category.builder()

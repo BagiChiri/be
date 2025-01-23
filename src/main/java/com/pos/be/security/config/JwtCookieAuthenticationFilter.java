@@ -17,7 +17,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Component
+//@Component
 public class JwtCookieAuthenticationFilter extends OncePerRequestFilter {
 
     private JwtDecoder jwtDecoder;

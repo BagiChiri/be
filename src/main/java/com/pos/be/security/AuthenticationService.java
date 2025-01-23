@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -33,20 +34,28 @@ public class AuthenticationService {
 
     public AuthResponse authenticate(LoginRequest loginRequest) {
         try {
-            Authentication authentication = authenticationManager
-                    .authenticate(
-                            new UsernamePasswordAuthenticationToken(
-                                    loginRequest.getUsername(),
-                                    loginRequest.getPassword())
-                    );
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            loginRequest.getUsername(),
+                            loginRequest.getPassword()
+                    )
+            );
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
             String token = this.createToken(authentication);
-            return new AuthResponse(loginRequest.getUsername(), token); //todo: get username from context
+
+            return new AuthResponse(loginRequest.getUsername(), token);
+        } catch (BadCredentialsException ex) {
+            throw new BadCredentialsException("Invalid username or password");
         } catch (Exception e) {
-            throw e;
+            System.err.println("Unexpected error during authentication: " + e.getMessage());
+            e.printStackTrace();
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "An error occurred during login", e);
         }
     }
+
+
+
 
     public String register(User user) throws RoleNotFoundException {
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
