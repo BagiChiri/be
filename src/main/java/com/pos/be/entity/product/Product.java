@@ -3,7 +3,6 @@ package com.pos.be.entity.product;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.pos.be.entity.category.Category;
-import com.pos.be.entity.order.OrderDetail;
 import com.pos.be.entity.supplier.Supplier;
 import jakarta.persistence.*;
 import lombok.*;
@@ -48,13 +47,6 @@ public class  Product {
             fetch = FetchType.LAZY
     )
     private List<Supplier> supplier = new ArrayList<>();
-
-    @OneToMany(
-            mappedBy = "product",
-            cascade = CascadeType.ALL,
-            fetch = FetchType.LAZY
-    )
-    private List<OrderDetail> orderDetails = new ArrayList<>();
 }
 
 

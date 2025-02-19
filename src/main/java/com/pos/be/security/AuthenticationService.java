@@ -80,7 +80,7 @@ public class AuthenticationService {
                 .issuer("http://localhost:8080/pos")
                 .issuedAt(Instant.now())
                 .subject(authentication.getName())
-                .expiresAt(Instant.now().plusSeconds(15 * 60))
+                .expiresAt(Instant.now().plusSeconds(15 * 60 * 60))
                 .claim("roles", createClaims(authentication))
                 .build();
 

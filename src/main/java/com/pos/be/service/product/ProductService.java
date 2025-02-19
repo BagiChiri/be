@@ -4,10 +4,13 @@ import com.pos.be.dto.product.ProductDTO;
 import com.pos.be.entity.category.Category;
 import com.pos.be.entity.product.Product;
 import com.pos.be.repository.category.CategoryRepository;
+import com.pos.be.repository.order.OrderRepository;
 import com.pos.be.repository.product.ProductRepository;
 import com.pos.be.service.category.CategoryService;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -24,6 +27,7 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryService categoryService;
     private final CategoryRepository categoryRepository;
+    private final OrderRepository orderRepository;
 
     public ResponseEntity<?> save(
             ProductDTO productDTO
@@ -97,7 +101,11 @@ public class ProductService {
     public ResponseEntity<?> delete(
             Long id
     ) {
-        productRepository.deleteById(id);
+        if (!orderRepository.existsOrderItemByProductId(id))
+            productRepository.deleteById(id);
+        else {
+            throw new DataIntegrityViolationException("This product has pending order");
+        }
         return ResponseEntity.ok(id);
     }
 
