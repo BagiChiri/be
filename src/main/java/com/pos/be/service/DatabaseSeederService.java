@@ -119,7 +119,7 @@ public class DatabaseSeederService {
 
         Random random = new Random();
         for (Product product : products) {
-            int numCategories = random.nextInt(5) + 1; // Each product gets 1-5 categories
+            int numCategories = random.nextInt(5) + 1; // Each product gets 1-5 categoryIds
             Set<Category> assignedCategories = new HashSet<>();
 
             for (int i = 0; i < numCategories; i++) {

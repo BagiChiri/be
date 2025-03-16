@@ -52,7 +52,7 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or expired token: " + e.getMessage());
         }
     }
-        @PostMapping("/register")
+        @PostMapping("/signup")
         public String register (@RequestBody User user) throws RoleNotFoundException {
             return authenticationService.register(user);
         }

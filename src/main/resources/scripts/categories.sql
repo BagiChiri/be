@@ -1,103 +1,88 @@
-INSERT INTO category (name)
-VALUES
-    ('Electronics'),
-    ('Furniture'),
-    ('Clothing'),
-    ('Books'),
-    ('Beauty Products'),
-    ('Toys'),
-    ('Groceries'),
-    ('Fitness Equipment'),
-    ('Office Supplies'),
-    ('Pet Supplies'),
-    ('Automotive'),
-    ('Jewelry'),
-    ('Home Decor'),
-    ('Gardening'),
-    ('Kitchen Appliances'),
-    ('Sports Gear'),
-    ('Footwear'),
-    ('Baby Products'),
-    ('Musical Instruments'),
-    ('Stationery'),
-    ('Outdoor Equipment'),
-    ('Health Products'),
-    ('Smartphones'),
-    ('Laptops'),
-    ('Tablets'),
-    ('Cameras'),
-    ('Watches'),
-    ('Art Supplies'),
-    ('Bedding'),
-    ('Cleaning Supplies'),
-    ('Hobby Supplies'),
-    ('Lighting'),
-    ('Games'),
-    ('Educational Materials'),
-    ('Travel Accessories'),
-    ('Camping Gear'),
-    ('Party Supplies'),
-    ('Safety Equipment'),
-    ('Bicycles'),
-    ('Tools'),
-    ('Plumbing Supplies'),
-    ('Car Accessories'),
-    ('Motorcycle Gear'),
-    ('Eyewear'),
-    ('Cosmetics'),
-    ('Perfumes'),
-    ('Skincare'),
-    ('Haircare'),
-    ('Nutritional Supplements'),
-    ('Cooking Utensils'),
-    ('Baking Supplies'),
-    ('Puzzles'),
-    ('Board Games'),
-    ('Computer Accessories'),
-    ('Networking Equipment'),
-    ('Printers'),
-    ('Scanners'),
-    ('Gaming Consoles'),
-    ('Video Games'),
-    ('Drones'),
-    ('Robotics Kits'),
-    ('3D Printers'),
-    ('VR Headsets'),
-    ('Fitness Trackers'),
-    ('Smartwatches'),
-    ('Energy Bars'),
-    ('Tea & Coffee'),
-    ('Kitchen Storage'),
-    ('Laundry Supplies'),
-    ('Seasonal Decorations'),
-    ('Bookshelves'),
-    ('Sofas'),
-    ('Dining Tables'),
-    ('Chairs'),
-    ('Wardrobes'),
-    ('Outdoor Furniture'),
-    ('BBQ Grills'),
-    ('Picnic Supplies'),
-    ('Travel Bags'),
-    ('Luggage'),
-    ('School Bags'),
-    ('Wallets'),
-    ('Belts'),
-    ('Hats'),
-    ('Scarves'),
-    ('Sunglasses'),
-    ('Rainwear'),
-    ('Winter Wear'),
-    ('Swimwear'),
-    ('Undergarments'),
-    ('Wedding Supplies'),
-    ('Craft Kits'),
-    ('DIY Kits'),
-    ('Art Prints'),
-    ('Posters'),
-    ('Gift Wrapping'),
-    ('Greeting Cards'),
-    ('Luxury Items'),
-    ('Organic Products'),
-    ('Eco-friendly Products'),
-    ('Secondhand Goods');
+-- Insert Categories
+INSERT INTO category (id, name) VALUES (1, 'Electronics');
+INSERT INTO category (id, name) VALUES (2, 'Clothing');
+INSERT INTO category (id, name) VALUES (3, 'Home & Kitchen');
+INSERT INTO category (id, name) VALUES (4, 'Sports & Outdoors');
+INSERT INTO category (id, name) VALUES (5, 'Beauty & Personal Care');
+INSERT INTO category (id, name) VALUES (6, 'Books');
+INSERT INTO category (id, name) VALUES (7, 'Toys & Games');
+INSERT INTO category (id, name) VALUES (8, 'Automotive');
+INSERT INTO category (id, name) VALUES (9, 'Grocery');
+INSERT INTO category (id, name) VALUES (10, 'Health & Wellness');
+INSERT INTO category (id, name) VALUES (11, 'Office Supplies');
+INSERT INTO category (id, name) VALUES (12, 'Garden & Outdoors');
+INSERT INTO category (id, name) VALUES (13, 'Pet Supplies');
+INSERT INTO category (id, name) VALUES (14, 'Jewelry');
+INSERT INTO category (id, name) VALUES (15, 'Footwear');
+INSERT INTO category (id, name) VALUES (16, 'Industrial & Scientific');
+INSERT INTO category (id, name) VALUES (17, 'Baby Products');
+INSERT INTO category (id, name) VALUES (18, 'Software');
+INSERT INTO category (id, name) VALUES (19, 'Musical Instruments');
+INSERT INTO category (id, name) VALUES (20, 'Tools & Home Improvement');
+INSERT INTO category (id, name) VALUES (21, 'Furniture');
+INSERT INTO category (id, name) VALUES (22, 'Appliances');
+INSERT INTO category (id, name) VALUES (23, 'Video Games');
+INSERT INTO category (id, name) VALUES (24, 'Movies & TV');
+INSERT INTO category (id, name) VALUES (25, 'Arts & Crafts');
+INSERT INTO category (id, name) VALUES (26, 'Stationery');
+INSERT INTO category (id, name) VALUES (27, 'Luggage & Travel Accessories');
+INSERT INTO category (id, name) VALUES (28, 'Watches');
+INSERT INTO category (id, name) VALUES (29, 'Handbags & Wallets');
+INSERT INTO category (id, name) VALUES (30, 'Sports Apparel');
+INSERT INTO category (id, name) VALUES (31, 'Outdoor Recreation');
+INSERT INTO category (id, name) VALUES (32, 'Fitness Equipment');
+INSERT INTO category (id, name) VALUES (33, 'Personal Electronics');
+INSERT INTO category (id, name) VALUES (34, 'Computers & Accessories');
+INSERT INTO category (id, name) VALUES (35, 'Mobile Phones');
+INSERT INTO category (id, name) VALUES (36, 'Home Decor');
+INSERT INTO category (id, name) VALUES (37, 'Cleaning Supplies');
+INSERT INTO category (id, name) VALUES (38, 'Lighting');
+INSERT INTO category (id, name) VALUES (39, 'Safety & Security');
+INSERT INTO category (id, name) VALUES (40, 'Musical Accessories');
+INSERT INTO category (id, name) VALUES (41, 'Smart Home Devices');
+INSERT INTO category (id, name) VALUES (42, 'Camping & Hiking');
+INSERT INTO category (id, name) VALUES (43, 'Cycling Accessories');
+INSERT INTO category (id, name) VALUES (44, 'Drones & Accessories');
+INSERT INTO category (id, name) VALUES (45, 'Photography Equipment');
+INSERT INTO category (id, name) VALUES (46, 'Aquarium Supplies');
+INSERT INTO category (id, name) VALUES (47, 'Board Games');
+INSERT INTO category (id, name) VALUES (48, 'Eco-Friendly Products');
+INSERT INTO category (id, name) VALUES (49, 'Seasonal Decor');
+INSERT INTO category (id, name) VALUES (50, 'Cooking Appliances');
+INSERT INTO category (id, name) VALUES (51, 'Baking Supplies');
+INSERT INTO category (id, name) VALUES (52, 'Craft Supplies');
+INSERT INTO category (id, name) VALUES (53, 'Educational Toys');
+INSERT INTO category (id, name) VALUES (54, 'Baby Clothing');
+INSERT INTO category (id, name) VALUES (55, 'Travel Gadgets');
+INSERT INTO category (id, name) VALUES (56, 'Outdoor Furniture');
+INSERT INTO category (id, name) VALUES (57, 'Home Improvement Tools');
+INSERT INTO category (id, name) VALUES (58, 'Automotive Tools');
+INSERT INTO category (id, name) VALUES (59, 'Motorcycle Accessories');
+INSERT INTO category (id, name) VALUES (60, 'Fishing Gear');
+INSERT INTO category (id, name) VALUES (61, 'Hunting Equipment');
+INSERT INTO category (id, name) VALUES (62, 'Skincare Products');
+INSERT INTO category (id, name) VALUES (63, 'Haircare Products');
+INSERT INTO category (id, name) VALUES (64, 'Men’s Grooming');
+INSERT INTO category (id, name) VALUES (65, 'Women’s Accessories');
+INSERT INTO category (id, name) VALUES (66, 'Virtual Reality Accessories');
+INSERT INTO category (id, name) VALUES (67, 'Collectibles');
+INSERT INTO category (id, name) VALUES (68, 'Digital Art Tools');
+INSERT INTO category (id, name) VALUES (69, 'Office Furniture');
+INSERT INTO category (id, name) VALUES (70, 'Home Office Supplies');
+INSERT INTO category (id, name) VALUES (71, 'Networking Devices');
+INSERT INTO category (id, name) VALUES (72, 'Wearable Technology');
+INSERT INTO category (id, name) VALUES (73, 'Luxury Watches');
+INSERT INTO category (id, name) VALUES (74, 'DIY Kits');
+INSERT INTO category (id, name) VALUES (75, 'Model Building Kits');
+INSERT INTO category (id, name) VALUES (76, 'Home Safety Devices');
+INSERT INTO category (id, name) VALUES (77, 'Language Learning Tools');
+INSERT INTO category (id, name) VALUES (78, 'Pet Grooming Products');
+INSERT INTO category (id, name) VALUES (79, 'Bird Supplies');
+INSERT INTO category (id, name) VALUES (80, 'Organic Food Products');
+
+select * from product_image;
+update product_image
+set url = 'uploads/products/1742026002189_new_Credit_note.png'
+where id = 92;
+select * from product;
+

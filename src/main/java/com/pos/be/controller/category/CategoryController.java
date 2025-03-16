@@ -5,6 +5,7 @@ import com.pos.be.service.category.CategoryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -41,11 +42,15 @@ public class CategoryController {
         }
     }
 
-    @GetMapping
-    public ResponseEntity<?> getAll() {
-        return categoryService.getAll();
+    @GetMapping("/by_name")
+    public ResponseEntity<?> getAllCategories(
+            @RequestParam(required = false) String query,
+            Pageable pageable
+    ) {
+        return categoryService.getAll(query, pageable);
     }
 
+    //here it starts today
     @GetMapping("/{id}")
     public ResponseEntity<?> get(
             @PathVariable Long id

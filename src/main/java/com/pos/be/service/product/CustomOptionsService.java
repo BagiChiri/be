@@ -78,7 +78,7 @@ public class CustomOptionsService {
                 .optionLabel(customOptions.getOptionLabel())
                 .optionType(customOptions.getOptionType())
                 .optionValue(customOptions.getOptionValue())
-                .productId(customOptions.getProduct().getId())
+                .productId(customOptions.getProduct().getProduct_id())
                 .build();
     }
 

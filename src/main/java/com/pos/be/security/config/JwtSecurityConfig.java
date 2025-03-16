@@ -57,7 +57,7 @@ public class JwtSecurityConfig {
         return httpSecurity
                 .authorizeHttpRequests(
                         auth -> auth
-                                .requestMatchers("/api/auth/login", "/api/auth/register", "/active-users", "/api/auth/validate-token").permitAll()
+                                .requestMatchers("/api/auth/login", "/uploads/**", "/api/auth/signup", "/active-users", "/api/auth/validate-token").permitAll()
                                 .requestMatchers("/products").permitAll()
                                 .requestMatchers(HttpMethod.PUT, "/products/{id}").authenticated()
                                 .requestMatchers(HttpMethod.DELETE, "/products/{id}").authenticated()
@@ -73,17 +73,32 @@ public class JwtSecurityConfig {
                 .build();
     }
 
-    @Bean
-    public WebMvcConfigurer corsConfigurer() {
-        return new WebMvcConfigurer() {
-            @Override
-            public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/**")
-                        .allowedMethods("*")
-                        .allowCredentials(true)
-                        .allowedOrigins("http://localhost:3000");
-            }
-        };
+//    @Bean
+//    public WebMvcConfigurer corsConfigurer() {
+//        return new WebMvcConfigurer() {
+//            @Override
+//            public void addCorsMappings(CorsRegistry registry) {
+//                registry.addMapping("/**")
+//                        .allowedMethods("*")
+//                        .allowCredentials(true)
+//                        .allowedOrigins("http://localhost:3000", "http://localhost:4200");
+//            }
+//        };
+//    }
+
+    @Configuration
+    public class CorsConfig {
+        @Bean
+        public WebMvcConfigurer corsConfigurer() {
+            return new WebMvcConfigurer() {
+                @Override
+                public void addCorsMappings(CorsRegistry registry) {
+                    registry.addMapping("/**")
+                            .allowedOrigins("http://localhost:3000")
+                            .allowedMethods("*");
+                }
+            };
+        }
     }
 
     @Bean
