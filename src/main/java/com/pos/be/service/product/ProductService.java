@@ -156,11 +156,98 @@ public class ProductService {
     private boolean isValidUploadedUrl(String url) {
         return url.startsWith("/uploads/products/")
                 && !url.contains("..")
+                && !url.isBlank()
+                && !url.isEmpty()
                 && url.length() > "/uploads/products/".length();
     }
     /**
      * Updates an existing product with optional new image file uploads.
      */
+//    public ResponseEntity<?> updateWithImages(ProductDTO dto, MultipartFile[] images) {
+//        Optional<Product> productOpt = productRepository.findById(dto.getId());
+//        if (!productOpt.isPresent()) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+//                    .body("Product with id " + dto.getId() + " doesn't exist.");
+//        }
+//        Product product = productOpt.get();
+//
+//        // Enforce that product name remains immutable.
+//        if (!product.getName().equalsIgnoreCase(dto.getName())) {
+//            return ResponseEntity.badRequest().body("Product name cannot be updated.");
+//        }
+//
+//        // Update categories.
+//        Iterable<Category> iterableCategories = categoryService.findAllByIds(dto.getCategoryIds());
+//        Set<Category> categories = new HashSet<>();
+//        iterableCategories.forEach(categories::add);
+//        product.setCategories(categories);
+//
+//        product.setDescription(dto.getDescription());
+//        product.setPrice(dto.getPrice());
+//        product.setQuantity(dto.getQuantity());
+//        product.setUnit(dto.getUnit());
+//
+//        // Ensure product images collection is not null.
+//        if (product.getImages() == null) {
+//            product.setImages(new ArrayList<>());
+//        }
+//
+//        // Process file uploads if provided.
+//        if (images != null && images.length > 0) {
+//            List<ProductImage> newImageList = new ArrayList<>();
+//            // Use a set to track URLs from the new uploads.
+//            Set<String> newImageUrls = new HashSet<>();
+//            for (int i = 0; i < images.length; i++) {
+//                MultipartFile file = images[i];
+//                try {
+//                    String imageUrl = saveFile(file);
+//                    // Check for duplicate file URL in both existing images and new uploads.
+//                    boolean duplicate = product.getImages().stream().anyMatch(img -> img.getUrl().equals(imageUrl))
+//                            || newImageUrls.contains(imageUrl);
+//                    if (!duplicate) {
+//                        newImageUrls.add(imageUrl);
+//                        ProductImage image = ProductImage.builder()
+//                                .url(imageUrl)
+//                                // For now, mark as primary if it's the first new image.
+//                                .primaryImage(i == 0)
+//                                .product(product)
+//                                .build();
+//                        newImageList.add(image);
+//                    }
+//                } catch (IOException e) {
+//                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                            .body("Error saving file: " + file.getOriginalFilename());
+//                }
+//            }
+//            // Merge new file images with existing ones.
+//            product.getImages().addAll(newImageList);
+//        }
+//        // Process DTO-provided image URLs if provided.
+//        else if (dto.getImages() != null && !dto.getImages().isEmpty()) {
+//            for (ProductImageDTO imgDto : dto.getImages()) {
+//                // Check if an image with the same URL already exists.
+//                Optional<ProductImage> existingOpt = product.getImages().stream()
+//                        .filter(img -> img.getUrl().equals(imgDto.getUrl()))
+//                        .findFirst();
+//                if (existingOpt.isPresent()) {
+//                    // Always update the primary flag based on the incoming DTO.
+//                    existingOpt.get().setPrimaryImage(imgDto.isPrimaryImage());
+//                } else {
+//                    product.getImages().add(ProductImage.builder()
+//                            .url(imgDto.getUrl())
+//                            .primaryImage(imgDto.isPrimaryImage())
+//                            .product(product)
+//                            .build());
+//                }
+//            }
+//        }
+//
+//        // Enforce that only one image is marked as primary.
+//        enforceSinglePrimary(product.getImages());
+//
+//        Product updatedProduct = productRepository.save(product);
+//        return ResponseEntity.ok(convertToDTO(updatedProduct));
+//    }
     public ResponseEntity<?> updateWithImages(ProductDTO dto, MultipartFile[] images) {
         Optional<Product> productOpt = productRepository.findById(dto.getId());
         if (!productOpt.isPresent()) {
@@ -190,94 +277,97 @@ public class ProductService {
             product.setImages(new ArrayList<>());
         }
 
-        // Process file uploads if provided.
+        // === STEP 1: Remove images that have been removed in the frontend ===
+        if (dto.getImages() != null) {
+            // Build a set of non-empty image URLs from the incoming DTO.
+            Set<String> dtoImageUrls = dto.getImages().stream()
+                    .map(ProductImageDTO::getUrl)
+                    .filter(url -> url != null && !url.trim().isEmpty())
+                    .collect(Collectors.toSet());
+
+            // Identify images to remove (those that are in the product but not in the DTO)
+            List<ProductImage> imagesToRemove = product.getImages().stream()
+                    .filter(img -> !dtoImageUrls.contains(img.getUrl()))
+                    .collect(Collectors.toList());
+
+            // Remove these images and delete files if necessary.
+            for (ProductImage img : imagesToRemove) {
+                product.getImages().remove(img);
+                if (isValidUploadedUrl(img.getUrl())) {
+                    deleteFile(img.getUrl());
+                }
+            }
+        }
+
+        // === STEP 2: Process file uploads if provided ===
         if (images != null && images.length > 0) {
-            Set<String> newUrls = new HashSet<>();
-            List<ProductImage> newImages = new ArrayList<>();
-
-            for (MultipartFile file : images) {
+            List<ProductImage> newImageList = new ArrayList<>();
+            // Track new image URLs in case of duplicates.
+            Set<String> newImageUrls = new HashSet<>();
+            for (int i = 0; i < images.length; i++) {
+                MultipartFile file = images[i];
                 try {
-                    if (file.isEmpty()) continue;
-
                     String imageUrl = saveFile(file);
-                    if (!isValidUploadedUrl(imageUrl)) {
-                        deleteFile(imageUrl); // Clean up invalid upload
-                        return ResponseEntity.badRequest()
-                                .body("Invalid uploaded image path: " + imageUrl);
+                    // Ensure the returned URL is not blank.
+                    if (imageUrl == null || imageUrl.trim().isEmpty()) {
+                        continue; // Skip this file if no valid URL is returned.
                     }
-
-                    // Check duplicates in existing and new images
-                    boolean isDuplicate = product.getImages().stream()
-                            .anyMatch(img -> img.getUrl().equalsIgnoreCase(imageUrl))
-                            || newUrls.stream().anyMatch(u -> u.equalsIgnoreCase(imageUrl));
-
-                    if (!isDuplicate) {
-                        ProductImage newImage = new ProductImage();
-                        newImage.setUrl(imageUrl);
-                        newImage.setPrimaryImage(false);
-                        newImage.setProduct(product);
-                        newImages.add(newImage);
-                        newUrls.add(imageUrl);
+                    // Check if an image with this URL already exists.
+                    Optional<ProductImage> existingOpt = product.getImages().stream()
+                            .filter(img -> img.getUrl().equals(imageUrl))
+                            .findFirst();
+                    if (existingOpt.isPresent()) {
+                        // If this file upload is to be primary, update the flag.
+                        if (i == 0) {
+                            existingOpt.get().setPrimaryImage(true);
+                        }
+                    } else if (!newImageUrls.contains(imageUrl)) {
+                        newImageUrls.add(imageUrl);
+                        ProductImage image = ProductImage.builder()
+                                .url(imageUrl)
+                                .primaryImage(i == 0) // Mark the first new image as primary.
+                                .product(product)
+                                .build();
+                        newImageList.add(image);
                     }
                 } catch (IOException e) {
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                             .body("Error saving file: " + file.getOriginalFilename());
                 }
             }
-            product.getImages().addAll(newImages);
+            product.getImages().addAll(newImageList);
         }
 
-        // Process DTO-provided image URLs if provided.
-        if (dto.getImages() != null) {
-            Set<String> dtoUrls = new HashSet<>();
-
-            for (ProductImageDTO imgDto : dto.getImages()) {
-                String url = imgDto.getUrl();
-
-                if (!isValidImageUrl(url)) {
-                    return ResponseEntity.badRequest()
-                            .body("Invalid image URL: " + url);
-                }
-
-                // Case-insensitive duplicate check
-                String lowerUrl = url.toLowerCase();
-                if (!dtoUrls.add(lowerUrl)) {
-                    return ResponseEntity.badRequest()
-                            .body("Duplicate URL in request: " + url);
-                }
-
-                Optional<ProductImage> existing = product.getImages().stream()
-                        .filter(img -> img.getUrl().equalsIgnoreCase(url))
-                        .findFirst();
-
-                if (existing.isPresent()) {
-                    // Update existing image (both web and upload URLs)
-                    existing.get().setPrimaryImage(imgDto.isPrimaryImage());
-                } else {
-                    // Add new image (validate uploaded URLs don't mix with web URLs)
-                    if (url.startsWith("/uploads/products/") &&
-                            product.getImages().stream().anyMatch(img -> img.getUrl().equalsIgnoreCase(url))
-                    ) {
-                        return ResponseEntity.badRequest()
-                                .body("Uploaded image URL conflicts with existing: " + url);
-                    }
-
-                    product.getImages().add(ProductImage.builder()
-                            .url(url)
-                            .primaryImage(imgDto.isPrimaryImage())
-                            .product(product)
-                            .build());
-                }
-            }
+        // === STEP 3: Process DTO-provided image URLs ===
+        // This covers images that are provided as URLs (not via file uploads).
+        if (dto.getImages() != null && !dto.getImages().isEmpty()) {
+            dto.getImages().stream()
+                    .filter(imgDto -> imgDto.getUrl() != null && !imgDto.getUrl().trim().isEmpty())
+                    .forEach(imgDto -> {
+                        Optional<ProductImage> existingOpt = product.getImages().stream()
+                                .filter(img -> img.getUrl().equals(imgDto.getUrl()))
+                                .findFirst();
+                        if (existingOpt.isPresent()) {
+                            // Update the primary flag.
+                            existingOpt.get().setPrimaryImage(imgDto.isPrimaryImage());
+                        } else {
+                            // Add the new image.
+                            product.getImages().add(ProductImage.builder()
+                                    .url(imgDto.getUrl())
+                                    .primaryImage(imgDto.isPrimaryImage())
+                                    .product(product)
+                                    .build());
+                        }
+                    });
         }
 
-
-        // Enforce only one image is marked as primary.
+        // Enforce that only one image is marked as primary.
         enforceSinglePrimary(product.getImages());
 
         Product updatedProduct = productRepository.save(product);
         return ResponseEntity.ok(convertToDTO(updatedProduct));
     }
+
 
     /**
      * Ensures that only one image in the list is marked as primary.
@@ -299,6 +389,27 @@ public class ProductService {
             images.get(0).setPrimaryImage(true);
         }
     }
+
+    /**
+     * Ensures that only one image in the list is marked as primary.
+     * If more than one is marked primary, only the first encountered remains primary.
+     * If none are marked, the first image is set as primary.
+     */
+//    private void enforceSinglePrimary(List<ProductImage> images) {
+//        boolean primaryFound = false;
+//        for (ProductImage img : images) {
+//            if (img.isPrimaryImage()) {
+//                if (!primaryFound) {
+//                    primaryFound = true;
+//                } else {
+//                    img.setPrimaryImage(false);
+//                }
+//            }
+//        }
+//        if (!primaryFound && !images.isEmpty()) {
+//            images.get(0).setPrimaryImage(true);
+//        }
+//    }
 
 
     /**
