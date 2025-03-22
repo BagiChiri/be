@@ -1,6 +1,9 @@
 package com.pos.be.dto.product;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 
 import java.util.List;
@@ -37,6 +40,5 @@ public class ProductDTO {
     @NotEmpty(message = "At least one category id must be provided.")
     private Set<Long> categoryIds;
 
-    // Optional list of image URLs (used when not uploading files)
     private List<ProductImageDTO> images;
 }

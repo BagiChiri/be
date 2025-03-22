@@ -13,15 +13,18 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     Optional<User> findByUsername(String username);
 
     @Query("""
-        SELECT u.username as username, u.firstName as firstName, u.lastName as lastName, u.address as address
-         FROM User u WHERE u.username = ?1
-    """)
+                SELECT u.username as username, u.firstName as firstName, u.lastName as lastName, u.address as address
+                 FROM User u WHERE u.username = ?1
+            """)
     UserProfile getUserProfile(@Param("username") String username);
 
     interface UserProfile {
         String getUsername();
+
         String getFirstName();
+
         String getLastName();
+
         String getAddress();
     }
 }

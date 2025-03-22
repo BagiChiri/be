@@ -1,4 +1,9 @@
 -- Insert Categories
+select * from category;
+
+select * from product where name = 'Hardcover Recipe Book';
+update product set quantity =1 where name = 'Hardcover Recipe Book';
+
 INSERT INTO category (id, name) VALUES (1, 'Electronics');
 INSERT INTO category (id, name) VALUES (2, 'Clothing');
 INSERT INTO category (id, name) VALUES (3, 'Home & Kitchen');

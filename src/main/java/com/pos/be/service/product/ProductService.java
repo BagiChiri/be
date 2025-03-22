@@ -36,17 +36,11 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final OrderRepository orderRepository;
 
-    // Define the upload directory (adjust as necessary or externalize to properties)
-//    private final String absoluteUploadPath = "C:/uploads/products/";
-    // Define paths with proper separator handling
     @Value("${file.upload.absolute-path}")
     private String absoluteUploadPath;// = "C:" + File.separator + "uploads" + File.separator + "products" + File.separator;
     @Value("${file.upload.url-path}")
     private String uploadDir;// = "/uploads/products/";
 
-    /**
-     * Creates a new product with optional image file uploads.
-     */
     public ResponseEntity<?> saveWithImages(ProductDTO productDTO, MultipartFile[] images) {
         if (productRepository.findByNameIgnoreCase(productDTO.getName()).isPresent()) {
             return ResponseEntity.badRequest().body("Product with name '" + productDTO.getName() + "' already exists.");
@@ -61,7 +55,6 @@ public class ProductService {
         List<ProductImageDTO> imageDTOs = new ArrayList<>();
         ProductImageDTO primaryImageDTO = null;
 
-        // Process existing URLs from productDTO
         List<ProductImageDTO> providedImages = productDTO.getImages();
         if (providedImages != null) {
             for (ProductImageDTO imgDTO : providedImages) {
@@ -81,14 +74,12 @@ public class ProductService {
             }
         }
 
-        // Process uploaded image files
         if (images != null) {
             for (MultipartFile file : images) {
                 try {
                     if (file.isEmpty()) continue;
 
                     String imageUrl = saveFile(file);
-                    // Changed to use isValidUploadedUrl instead of isValidImageUrl
                     if (isValidUploadedUrl(imageUrl)) {
                         if (uniqueImages.add(imageUrl)) {
                             ProductImageDTO newImageDTO = ProductImageDTO.builder()
@@ -113,7 +104,6 @@ public class ProductService {
         }
 
 
-        // Ensure only one primary image is set
         if (primaryImageDTO != null) {
             primaryImageDTO.setPrimaryImage(true);
         } else if (!imageDTOs.isEmpty()) {
@@ -131,19 +121,16 @@ public class ProductService {
             return false;
         }
 
-        // Check for web URL
         if (url.startsWith("http://") || url.startsWith("https://")) {
             return isValidWebUrl(url);
         }
 
-        // Check for uploaded file path
         return url.startsWith("/uploads/products/")
                 && !url.contains("..")
                 && url.length() > "/uploads/products/".length();
     }
 
     private boolean isValidWebUrl(String url) {
-        // Basic URL validation for web URLs
         try {
             new URI(url);
             return true;
@@ -152,7 +139,6 @@ public class ProductService {
         }
     }
 
-    // Additional helper method for uploaded URLs
     private boolean isValidUploadedUrl(String url) {
         return url.startsWith("/uploads/products/")
                 && !url.contains("..")
@@ -160,10 +146,8 @@ public class ProductService {
                 && !url.isEmpty()
                 && url.length() > "/uploads/products/".length();
     }
-    /**
-     * Updates an existing product with optional new image file uploads.
-     */
-//    public ResponseEntity<?> updateWithImages(ProductDTO dto, MultipartFile[] images) {
+
+    //    public ResponseEntity<?> updateWithImages(ProductDTO dto, MultipartFile[] images) {
 //        Optional<Product> productOpt = productRepository.findById(dto.getId());
 //        if (!productOpt.isPresent()) {
 //            return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -171,12 +155,10 @@ public class ProductService {
 //        }
 //        Product product = productOpt.get();
 //
-//        // Enforce that product name remains immutable.
 //        if (!product.getName().equalsIgnoreCase(dto.getName())) {
 //            return ResponseEntity.badRequest().body("Product name cannot be updated.");
 //        }
 //
-//        // Update categories.
 //        Iterable<Category> iterableCategories = categoryService.findAllByIds(dto.getCategoryIds());
 //        Set<Category> categories = new HashSet<>();
 //        iterableCategories.forEach(categories::add);
@@ -187,28 +169,23 @@ public class ProductService {
 //        product.setQuantity(dto.getQuantity());
 //        product.setUnit(dto.getUnit());
 //
-//        // Ensure product images collection is not null.
 //        if (product.getImages() == null) {
 //            product.setImages(new ArrayList<>());
 //        }
 //
-//        // Process file uploads if provided.
 //        if (images != null && images.length > 0) {
 //            List<ProductImage> newImageList = new ArrayList<>();
-//            // Use a set to track URLs from the new uploads.
 //            Set<String> newImageUrls = new HashSet<>();
 //            for (int i = 0; i < images.length; i++) {
 //                MultipartFile file = images[i];
 //                try {
 //                    String imageUrl = saveFile(file);
-//                    // Check for duplicate file URL in both existing images and new uploads.
 //                    boolean duplicate = product.getImages().stream().anyMatch(img -> img.getUrl().equals(imageUrl))
 //                            || newImageUrls.contains(imageUrl);
 //                    if (!duplicate) {
 //                        newImageUrls.add(imageUrl);
 //                        ProductImage image = ProductImage.builder()
 //                                .url(imageUrl)
-//                                // For now, mark as primary if it's the first new image.
 //                                .primaryImage(i == 0)
 //                                .product(product)
 //                                .build();
@@ -222,15 +199,12 @@ public class ProductService {
 //            // Merge new file images with existing ones.
 //            product.getImages().addAll(newImageList);
 //        }
-//        // Process DTO-provided image URLs if provided.
 //        else if (dto.getImages() != null && !dto.getImages().isEmpty()) {
 //            for (ProductImageDTO imgDto : dto.getImages()) {
-//                // Check if an image with the same URL already exists.
 //                Optional<ProductImage> existingOpt = product.getImages().stream()
 //                        .filter(img -> img.getUrl().equals(imgDto.getUrl()))
 //                        .findFirst();
 //                if (existingOpt.isPresent()) {
-//                    // Always update the primary flag based on the incoming DTO.
 //                    existingOpt.get().setPrimaryImage(imgDto.isPrimaryImage());
 //                } else {
 //                    product.getImages().add(ProductImage.builder()
@@ -242,7 +216,6 @@ public class ProductService {
 //            }
 //        }
 //
-//        // Enforce that only one image is marked as primary.
 //        enforceSinglePrimary(product.getImages());
 //
 //        Product updatedProduct = productRepository.save(product);
@@ -369,11 +342,6 @@ public class ProductService {
     }
 
 
-    /**
-     * Ensures that only one image in the list is marked as primary.
-     * If more than one is marked primary, only the first encountered remains primary.
-     * If none are marked, the first image is set as primary.
-     */
     private void enforceSinglePrimary(List<ProductImage> images) {
         boolean primaryFound = false;
         for (ProductImage img : images) {
@@ -390,31 +358,6 @@ public class ProductService {
         }
     }
 
-    /**
-     * Ensures that only one image in the list is marked as primary.
-     * If more than one is marked primary, only the first encountered remains primary.
-     * If none are marked, the first image is set as primary.
-     */
-//    private void enforceSinglePrimary(List<ProductImage> images) {
-//        boolean primaryFound = false;
-//        for (ProductImage img : images) {
-//            if (img.isPrimaryImage()) {
-//                if (!primaryFound) {
-//                    primaryFound = true;
-//                } else {
-//                    img.setPrimaryImage(false);
-//                }
-//            }
-//        }
-//        if (!primaryFound && !images.isEmpty()) {
-//            images.get(0).setPrimaryImage(true);
-//        }
-//    }
-
-
-    /**
-     * Retrieves a product by its id.
-     */
     public ResponseEntity<?> get(Long id) {
         Optional<Product> productOpt = productRepository.findById(id);
         if (productOpt.isPresent()) {
@@ -424,9 +367,6 @@ public class ProductService {
                 .body("Product with id " + id + " doesn't exist.");
     }
 
-    /**
-     * Retrieves products with optional name filtering.
-     */
     public Page<ProductDTO> getProducts(String name, Pageable pageable) {
         Page<Product> productsPage;
         if (name != null && !name.trim().isEmpty()) {
@@ -441,9 +381,6 @@ public class ProductService {
         return new PageImpl<>(dtos, pageable, productsPage.getTotalElements());
     }
 
-    /**
-     * Retrieves products by a specific category id.
-     */
     public Page<ProductDTO> getProductsByCategory(Long categoryId, Pageable pageable) {
         Page<Product> page = productRepository.findByCategories_Id(categoryId, pageable);
         List<ProductDTO> dtos = page.getContent()
@@ -453,9 +390,6 @@ public class ProductService {
         return new PageImpl<>(dtos, pageable, page.getTotalElements());
     }
 
-    /**
-     * Retrieves detailed product information using a native query.
-     */
     public ResponseEntity<?> getDetailedProduct(Long id) {
         Object details = productRepository.getProductDetailsById(id);
         if (details == null) {
@@ -465,9 +399,6 @@ public class ProductService {
         return ResponseEntity.ok(details);
     }
 
-    /**
-     * Deletes a product and its associated images.
-     */
     public ResponseEntity<?> delete(Long id) {
         Optional<Product> productOpt = productRepository.findById(id);
         if (!productOpt.isPresent()) {
@@ -487,11 +418,6 @@ public class ProductService {
         return ResponseEntity.ok(id);
     }
 
-    // --- Utility Methods ---
-
-    /**
-     * Saves an uploaded file to the designated directory and returns its URL/path.
-     */
     private String saveFile(MultipartFile file) throws IOException {
         // Validate upload directory configuration
         if (absoluteUploadPath == null || absoluteUploadPath.isBlank()) {
@@ -524,12 +450,8 @@ public class ProductService {
     }
 
 
-    /**
-     * Deletes a file given its path.
-     */
     private void deleteFile(String fileUrl) {
         try {
-            // Convert URL path to filesystem path
             String filePath = fileUrl.replaceFirst(uploadDir, absoluteUploadPath)
                     .replace("/", File.separator);
             File file = new File(filePath);
@@ -543,9 +465,6 @@ public class ProductService {
         }
     }
 
-    /**
-     * Converts a Product entity to a ProductDTO.
-     */
     private ProductDTO convertToDTO(Product product) {
         Set<Long> categoryIds = product.getCategories().stream()
                 .map(Category::getId)
@@ -572,9 +491,6 @@ public class ProductService {
                 .build();
     }
 
-    /**
-     * Converts a ProductDTO to a Product entity.
-     */
     private Product convertToEntity(ProductDTO dto) {
         Iterable<Category> iterableCategories = categoryService.findAllByIds(dto.getCategoryIds());
         Set<Category> categorySet = new HashSet<>();

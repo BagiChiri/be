@@ -1,29 +1,40 @@
 package com.pos.be.entity.order;
 
+import com.pos.be.entity.product.Product;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Data
-@Table(name = "`order`")
+@Table(name = "orders") // "order" is a reserved keyword in many SQL dialects
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Order {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    private String orderNumber;
+
     private LocalDateTime orderDate;
 
-    @Column(nullable = false)
-    private double totalAmount;
+    private Double totalPrice;
 
-    @Column(nullable = false)
-    private String status;
+    private String orderStatus;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OrderItem> items = new ArrayList<>();
+    private List<OrderItem> orderItems = new ArrayList<>();
+
+    // Helper method to add items
+    public void addOrderItem(OrderItem item) {
+        orderItems.add(item);
+        item.setOrder(this);
+    }
 }

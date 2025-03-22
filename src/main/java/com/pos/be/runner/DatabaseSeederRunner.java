@@ -2,7 +2,6 @@ package com.pos.be.runner;
 
 import com.pos.be.service.DatabaseSeederService;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.stereotype.Component;
 
 //@Component
 public class DatabaseSeederRunner implements CommandLineRunner {

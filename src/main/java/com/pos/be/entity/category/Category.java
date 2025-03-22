@@ -3,7 +3,6 @@ package com.pos.be.entity.category;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.pos.be.entity.product.Product;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.util.HashSet;

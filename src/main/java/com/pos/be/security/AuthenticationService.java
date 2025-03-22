@@ -55,8 +55,6 @@ public class AuthenticationService {
     }
 
 
-
-
     public String register(User user) throws RoleNotFoundException {
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
             throw new IllegalArgumentException("Username already exists!");

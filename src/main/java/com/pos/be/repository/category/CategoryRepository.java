@@ -9,7 +9,6 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -21,12 +20,12 @@ public interface CategoryRepository extends CrudRepository<Category, Long>, Pagi
 
 
     @Query("""
-    SELECT c, COUNT(p)
-    FROM Category c 
-    LEFT JOIN c.products p 
-    WHERE (:query IS NULL OR c.name LIKE CONCAT('%', :query, '%'))
-    GROUP BY c
-""")
+                SELECT c, COUNT(p)
+                FROM Category c 
+                LEFT JOIN c.products p 
+                WHERE (:query IS NULL OR c.name LIKE CONCAT('%', :query, '%'))
+                GROUP BY c
+            """)
     Page<Object[]> findCategoriesWithProductCounts(@Param("query") String query, Pageable pageable);
 
 

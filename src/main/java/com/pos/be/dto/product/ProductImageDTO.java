@@ -18,7 +18,6 @@ public class ProductImageDTO implements PrimaryImageFlag {
     @NotBlank(message = "Image URL must not be blank.")
     private String url;
 
-    // Indicates whether this image is the primary image.
     private boolean primaryImage;
 
     @Override

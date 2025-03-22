@@ -203,7 +203,6 @@ public class CategoryService {
     }
 
 
-
     public ResponseEntity<?> get(Long id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category doesn't exists"));

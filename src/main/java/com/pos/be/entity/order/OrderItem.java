@@ -2,26 +2,30 @@ package com.pos.be.entity.order;
 
 import com.pos.be.entity.product.Product;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
-@Data
 @Entity
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class OrderItem {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "product_id", nullable = true, foreignKey = @ForeignKey(value = ConstraintMode.CONSTRAINT))
-    private Product product;
-
-    @ManyToOne
-    @JoinColumn(name = "order_id", nullable = false)
+    // Reference to parent Order
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id")
     private Order order;
 
-    @Column(nullable = false)
-    private Integer quantity;
+    // Reference to the purchased Product
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id")
+    private Product product;
 
-    @Column(nullable = false)
-    private double price;
+    private Integer quantity;
+    private Double price;
 }

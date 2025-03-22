@@ -52,20 +52,21 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or expired token: " + e.getMessage());
         }
     }
-        @PostMapping("/signup")
-        public String register (@RequestBody User user) throws RoleNotFoundException {
-            return authenticationService.register(user);
-        }
 
-        public void printCurrentUserDetails () {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    @PostMapping("/signup")
+    public String register(@RequestBody User user) throws RoleNotFoundException {
+        return authenticationService.register(user);
+    }
 
-            if (authentication != null) {
-                System.out.println("Authenticated user: " + authentication.getName());
-                System.out.println("Authorities: " + authentication.getAuthorities());
-                System.out.println("User details: " + authentication.getDetails());
-            } else {
-                System.out.println("No user is authenticated.");
-            }
+    public void printCurrentUserDetails() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null) {
+            System.out.println("Authenticated user: " + authentication.getName());
+            System.out.println("Authorities: " + authentication.getAuthorities());
+            System.out.println("User details: " + authentication.getDetails());
+        } else {
+            System.out.println("No user is authenticated.");
         }
     }
+}

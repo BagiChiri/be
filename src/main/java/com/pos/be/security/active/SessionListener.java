@@ -18,7 +18,6 @@ public class SessionListener implements HttpSessionListener {
     public void sessionDestroyed(HttpSessionEvent event) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        // Remove user from active users
         activeUserStore.removeUser(username);
     }
 }

@@ -11,7 +11,6 @@ import java.util.Set;
 @Component
 public class ActiveUserStore implements ApplicationListener<AuthenticationSuccessEvent> {
 
-    // A Set to store currently logged-in users
     private final Set<String> activeUsers = new HashSet<>();
 
     @Override

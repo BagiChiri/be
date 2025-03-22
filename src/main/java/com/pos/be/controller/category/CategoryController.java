@@ -50,7 +50,6 @@ public class CategoryController {
         return categoryService.getAll(query, pageable);
     }
 
-    //here it starts today
     @GetMapping("/{id}")
     public ResponseEntity<?> get(
             @PathVariable Long id
@@ -67,11 +66,9 @@ public class CategoryController {
         try {
             return categoryService.delete(id);
         } catch (DataIntegrityViolationException e) {
-            // Handle cases where the foreign key constraint is violated
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body("Cannot delete category because it is referenced by other records.");
         } catch (Exception e) {
-            // Handle other unexpected exceptions
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("An unexpected error occurred while deleting the category.");
         }

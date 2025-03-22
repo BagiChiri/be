@@ -2,7 +2,10 @@ package com.pos.be.entity.product;
 
 import com.pos.be.entity.category.Category;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 import java.util.Set;

@@ -1,10 +1,8 @@
 package com.pos.be.service;
 
 import com.pos.be.entity.category.Category;
-
 import com.pos.be.entity.product.CustomOptions;
 import com.pos.be.entity.product.Product;
-
 import com.pos.be.entity.user.Role;
 import com.pos.be.entity.user.User;
 import com.pos.be.repository.category.CategoryRepository;
@@ -81,7 +79,6 @@ public class DatabaseSeederService {
     }
 
 
-
     private void insertProducts() {
         List<Product> products = new ArrayList<>();
         IntStream.range(0, 12000).forEach(i -> {
@@ -96,7 +93,6 @@ public class DatabaseSeederService {
     }
 
 
-
     private void insertCategories() {
         List<Category> categories = new ArrayList<>();
         IntStream.range(0, 120).forEach(i -> {
@@ -106,7 +102,6 @@ public class DatabaseSeederService {
         });
         categoryRepository.saveAll(categories);
     }
-
 
 
     private void seedProductCategoryRelationships() {

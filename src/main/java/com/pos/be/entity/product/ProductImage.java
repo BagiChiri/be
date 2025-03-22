@@ -2,7 +2,10 @@ package com.pos.be.entity.product;
 
 import com.pos.be.entity.PrimaryImageFlag;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "product_image")
@@ -16,11 +19,9 @@ public class ProductImage implements PrimaryImageFlag {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // URL or file path for the image
     @Column(nullable = false)
     private String url;
 
-    // Flag indicating whether this is the primary image
     @Column(nullable = false)
     private boolean primaryImage;
 
