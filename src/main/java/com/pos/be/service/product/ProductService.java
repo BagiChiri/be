@@ -6,7 +6,7 @@ import com.pos.be.entity.category.Category;
 import com.pos.be.entity.product.Product;
 import com.pos.be.entity.product.ProductImage;
 import com.pos.be.repository.category.CategoryRepository;
-import com.pos.be.repository.order.OrderRepository;
+import com.pos.be.repository.order.ConsignmentRepository;
 import com.pos.be.repository.product.ProductRepository;
 import com.pos.be.service.category.CategoryService;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +34,7 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryService categoryService;
     private final CategoryRepository categoryRepository;
-    private final OrderRepository orderRepository;
+    private final ConsignmentRepository consignmentRepository;
 
     @Value("${file.upload.absolute-path}")
     private String absoluteUploadPath;// = "C:" + File.separator + "uploads" + File.separator + "products" + File.separator;
@@ -405,7 +405,7 @@ public class ProductService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Product with id " + id + " doesn't exist.");
         }
-        if (orderRepository.existsOrderItemByProductId(id)) {
+        if (consignmentRepository.existsConsignmentByProductId(id)) {
             throw new DataIntegrityViolationException("This product has pending orders.");
         }
         Product product = productOpt.get();

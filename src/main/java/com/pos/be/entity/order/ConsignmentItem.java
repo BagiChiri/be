@@ -10,16 +10,16 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class OrderItem {
+public class ConsignmentItem {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
     // Reference to parent Order
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id")
-    private Order order;
+    @JoinColumn(name = "consignment_id")
+    private Consignment consignment;
 
     // Reference to the purchased Product
     @ManyToOne(fetch = FetchType.LAZY)

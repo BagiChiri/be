@@ -17,7 +17,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class OrderItemDTO {
+public class ConsignmentItemDTO {
     private Long id;
     private Long productId; // We'll store the Product's ID here
     private int quantity;

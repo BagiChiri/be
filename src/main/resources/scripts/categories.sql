@@ -1,6 +1,9 @@
 -- Insert Categories
 select * from category;
 
+select * from consignment;
+select * from consignment_item;
+
 select * from product where name = 'Hardcover Recipe Book';
 update product set quantity =1 where name = 'Hardcover Recipe Book';
 

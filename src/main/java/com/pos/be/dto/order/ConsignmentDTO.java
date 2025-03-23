@@ -25,11 +25,11 @@ import java.util.List;
 
 @Getter
 @Setter
-public class OrderDTO {
+public class ConsignmentDTO {
     private Long id;
     private String orderNumber;
     private LocalDateTime orderDate;
     private Double totalPrice;     // Matches "totalPrice" in your frontend
     private String orderStatus;    // Matches "orderStatus" in your frontend
-    private List<OrderItemDTO> orderItems;
+    private List<ConsignmentItemDTO> orderItems;
 }
