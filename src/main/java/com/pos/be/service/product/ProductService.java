@@ -381,14 +381,24 @@ public class ProductService {
         return new PageImpl<>(dtos, pageable, productsPage.getTotalElements());
     }
 
-    public Page<ProductDTO> getProductsByCategory(Long categoryId, Pageable pageable) {
-        Page<Product> page = productRepository.findByCategories_Id(categoryId, pageable);
+    public Page<ProductDTO> getProductsByCategory(Long categoryId, String query, Pageable pageable) {
+        Page<Product> page;
+
+        if (query != null && !query.trim().isEmpty()) {
+            page = productRepository.findByCategories_IdAndNameContainingIgnoreCase(categoryId, query, pageable);
+        } else {
+            page = productRepository.findByCategories_Id(categoryId, pageable);
+        }
+
         List<ProductDTO> dtos = page.getContent()
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+
         return new PageImpl<>(dtos, pageable, page.getTotalElements());
     }
+
+
 
     public ResponseEntity<?> getDetailedProduct(Long id) {
         Object details = productRepository.getProductDetailsById(id);

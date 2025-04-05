@@ -180,8 +180,16 @@ public class CategoryService {
     }
 
     public ResponseEntity<?> getAll(String query, Pageable pageable) {
+        // Get paginated categories with product counts
         Page<Object[]> categoryPage = categoryRepository.findCategoriesWithProductCounts(query, pageable);
 
+        // Get total count of all categories (not just the paginated ones)
+        long totalCategories = categoryRepository.count();
+
+        // Get total count of all products across all categories
+        long totalProducts = categoryRepository.sumProductsAcrossAllCategories();
+
+        // Map the results to DTOs
         List<CategoryDTO> categories = categoryPage.getContent().stream()
                 .map(result -> {
                     Category category = (Category) result[0];
@@ -194,10 +202,15 @@ public class CategoryService {
                 })
                 .collect(Collectors.toList());
 
+        // Build the response with more descriptive keys
         Map<String, Object> response = new HashMap<>();
-        response.put("categories", categories);
-        response.put("totalPages", categoryPage.getTotalPages());
-        response.put("totalElements", categoryPage.getTotalElements());
+        response.put("categories", categories); // The paginated list of categories
+        response.put("currentPage", pageable.getPageNumber()); // Current page number
+        response.put("pageSize", pageable.getPageSize()); // Page size
+        response.put("totalCategories", totalCategories); // Total categories in database
+        response.put("totalProducts", totalProducts); // Total products across all categories
+        response.put("totalPages", categoryPage.getTotalPages()); // Total pages available
+        response.put("totalElementsInPage", categoryPage.getNumberOfElements()); // Number of elements in current page
 
         return ResponseEntity.ok(response);
     }

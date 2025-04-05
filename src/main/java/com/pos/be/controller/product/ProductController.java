@@ -61,11 +61,18 @@ public class ProductController {
     }
 
     @GetMapping("/by_category/{categoryId}")
-    public Page<ProductDTO> getByCategory(@PathVariable Long categoryId, Pageable pageable) {
-        return productService.getProductsByCategory(categoryId, pageable);
+    public Page<ProductDTO> getByCategory(
+            @PathVariable Long categoryId,
+            @RequestParam(required = false) String query,
+            Pageable pageable
+    ) {
+        return productService.getProductsByCategory(categoryId, query, pageable);
     }
 
+
+
     @DeleteMapping("/{id}")
+    
     public ResponseEntity<?> delete(@PathVariable Long id) {
         return productService.delete(id);
     }

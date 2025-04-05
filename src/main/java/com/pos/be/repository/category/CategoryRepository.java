@@ -20,13 +20,19 @@ public interface CategoryRepository extends CrudRepository<Category, Long>, Pagi
 
 
     @Query("""
-                SELECT c, COUNT(p)
-                FROM Category c 
-                LEFT JOIN c.products p 
-                WHERE (:query IS NULL OR c.name LIKE CONCAT('%', :query, '%'))
-                GROUP BY c
+            SELECT c, COUNT(p)
+            FROM Category c 
+            LEFT JOIN c.products p 
+            WHERE (:query IS NULL OR c.name LIKE CONCAT('%', :query, '%'))
+            GROUP BY c
             """)
     Page<Object[]> findCategoriesWithProductCounts(@Param("query") String query, Pageable pageable);
+
+    @Query("SELECT COUNT(c) FROM Category c")
+    long count();
+
+    @Query("SELECT SUM(SIZE(c.products)) FROM Category c")
+    Long sumProductsAcrossAllCategories();
 
 
 }
