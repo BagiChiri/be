@@ -18,6 +18,8 @@ public interface UserRepository extends JpaRepository<User, Integer> {
             """)
     UserProfile getUserProfile(@Param("username") String username);
 
+    boolean existsByUsername(String username);
+
     interface UserProfile {
         String getUsername();
 

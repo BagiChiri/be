@@ -143,13 +143,17 @@ package com.pos.be.service.category;
 
 import com.pos.be.dto.category.CategoryDTO;
 import com.pos.be.entity.category.Category;
+import com.pos.be.exception.PermissionDeniedException;
 import com.pos.be.repository.category.CategoryRepository;
+import com.pos.be.security.rbac.Permissions;
+import com.pos.be.security.rbac.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -161,7 +165,13 @@ import java.util.stream.Collectors;
 public class CategoryService {
     private final CategoryRepository categoryRepository;
 
+    @PreAuthorize("hasAuthority('" + Permissions.CATEGORY_MANAGE + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ResponseEntity<?> save(CategoryDTO request) {
+        // Additional service-level permission check
+        if (!SecurityUtils.hasPermission(Permissions.CATEGORY_MANAGE)) {
+            throw new PermissionDeniedException("You don't have permission to create categories");
+        }
+
         Category category = convertToEntity(request);
         try {
             CategoryDTO categoryDTO = convertToDTO(categoryRepository.save(category));
@@ -171,7 +181,13 @@ public class CategoryService {
         }
     }
 
+    @PreAuthorize("hasAuthority('" + Permissions.CATEGORY_MANAGE + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ResponseEntity<?> update(CategoryDTO request) {
+        // Additional service-level permission check
+        if (!SecurityUtils.hasPermission(Permissions.CATEGORY_MANAGE)) {
+            throw new PermissionDeniedException("You don't have permission to update categories");
+        }
+
         Category category = categoryRepository.findById(request.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category doesn't exist."));
         category.setName(request.getName());
@@ -179,7 +195,13 @@ public class CategoryService {
         return ResponseEntity.ok("Updated Successfully.");
     }
 
+    @PreAuthorize("hasAuthority('" + Permissions.CATEGORY_VIEW + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ResponseEntity<?> getAll(String query, Pageable pageable) {
+        // Additional service-level permission check
+        if (!SecurityUtils.hasPermission(Permissions.CATEGORY_VIEW)) {
+            throw new PermissionDeniedException("You don't have permission to view categories");
+        }
+
         // Get paginated categories with product counts
         Page<Object[]> categoryPage = categoryRepository.findCategoriesWithProductCounts(query, pageable);
 
@@ -216,14 +238,26 @@ public class CategoryService {
     }
 
 
+    @PreAuthorize("hasAuthority('" + Permissions.CATEGORY_VIEW + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ResponseEntity<?> get(Long id) {
+        // Additional service-level permission check
+        if (!SecurityUtils.hasPermission(Permissions.CATEGORY_VIEW)) {
+            throw new PermissionDeniedException("You don't have permission to view categories");
+        }
+
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category doesn't exists"));
         CategoryDTO categoryDTO = convertToDTO(category);
         return ResponseEntity.ok(categoryDTO);
     }
 
+    @PreAuthorize("hasAuthority('" + Permissions.CATEGORY_MANAGE + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ResponseEntity<?> delete(Long id) {
+        // Additional service-level permission check
+        if (!SecurityUtils.hasPermission(Permissions.CATEGORY_MANAGE)) {
+            throw new PermissionDeniedException("You don't have permission to delete categories");
+        }
+
         if (categoryRepository.existsById(id)) {
             try {
                 categoryRepository.deleteById(id);
@@ -237,6 +271,7 @@ public class CategoryService {
                     .body("Category doesn't exist.");
         }
     }
+
 
     public Iterable<Category> findAllByIds(Set<Long> ids) {
         return categoryRepository.findAllById(ids);
@@ -260,8 +295,7 @@ public class CategoryService {
 
     public Set<Long> existsById(Set<Long> categoryIds) {
         Set<Long> wrongIds = new HashSet<>();
-        for (Long id :
-                categoryIds) {
+        for (Long id : categoryIds) {
             if (!categoryRepository.existsById(id)) {
                 wrongIds.add(id);
             }

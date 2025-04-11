@@ -1,5 +1,6 @@
 package com.pos.be.advice;
 
+import com.pos.be.exception.PermissionDeniedException;
 import com.pos.be.exception.ResourceNotFoundException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
@@ -40,6 +41,16 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleGenericException(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("An unexpected error occurred: " + ex.getMessage());
+    }
+
+    @ExceptionHandler(PermissionDeniedException.class)
+    public ResponseEntity<?> handlePermissionDenied(PermissionDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of(
+                        "error", "Permission Denied",
+                        "message", ex.getMessage(),
+                        "status", HttpStatus.FORBIDDEN.value()
+                ));
     }
 }
 

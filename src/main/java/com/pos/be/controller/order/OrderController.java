@@ -57,9 +57,11 @@ package com.pos.be.controller.order;
 import com.pos.be.component.ConsignmentMapper;
 import com.pos.be.dto.order.ConsignmentDTO;
 import com.pos.be.entity.order.Consignment;
+import com.pos.be.security.rbac.Permissions;
 import com.pos.be.service.order.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -78,42 +80,42 @@ public class OrderController {
 
     // Get paginated orders, optionally searching by orderNumber
     @GetMapping("/by_name")
+    @PreAuthorize("hasAuthority('" + Permissions.ORDER_VIEW + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public Page<ConsignmentDTO> getOrders(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size,
             @RequestParam(required = false) String query
     ) {
-        Page<Consignment> orderPage = orderService.getOrders(page, size, query);
-        // Map each entity to a DTO
-        return orderPage.map(consignmentMapper::toDTO);
+        return orderService.getOrders(page, size, query)
+                .map(consignmentMapper::toDTO);
     }
 
     // Fetch an order by ID
     @GetMapping("/by_id/{id}")
+    @PreAuthorize("hasAuthority('" + Permissions.ORDER_VIEW + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ConsignmentDTO getOrderById(@PathVariable Long id) {
-        Consignment consignment = orderService.getOrderById(id);
-        return consignmentMapper.toDTO(consignment);
+        return consignmentMapper.toDTO(orderService.getOrderById(id));
     }
 
     // Create a new order
     @PostMapping
+    @PreAuthorize("hasAuthority('" + Permissions.ORDER_CREATE + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ConsignmentDTO createOrder(@RequestBody ConsignmentDTO consignmentDTO) {
         Consignment entityToCreate = consignmentMapper.toEntity(consignmentDTO);
-        Consignment createdEntity = orderService.createOrder(entityToCreate);
-        return consignmentMapper.toDTO(createdEntity);
+        return consignmentMapper.toDTO(orderService.createOrder(entityToCreate));
     }
 
     // Update an existing order
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('" + Permissions.ORDER_MANAGE + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ConsignmentDTO updateOrder(@PathVariable Long id, @RequestBody ConsignmentDTO consignmentDTO) {
         Consignment entityToUpdate = consignmentMapper.toEntity(consignmentDTO);
-        Consignment updatedEntity = orderService.updateOrder(id, entityToUpdate);
-        return consignmentMapper.toDTO(updatedEntity);
+        return consignmentMapper.toDTO(orderService.updateOrder(id, entityToUpdate));
     }
 
     // Delete an order
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('" + Permissions.ORDER_MANAGE + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public void deleteOrder(@PathVariable Long id) {
         orderService.deleteOrder(id);
-    }
-}
+    }}

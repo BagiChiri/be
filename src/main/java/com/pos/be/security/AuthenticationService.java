@@ -22,6 +22,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import javax.management.relation.RoleNotFoundException;
 import java.time.Instant;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -79,14 +80,27 @@ public class AuthenticationService {
                 .issuedAt(Instant.now())
                 .subject(authentication.getName())
                 .expiresAt(Instant.now().plusSeconds(15 * 60 * 60))
-                .claim("roles", createClaims(authentication))
+                .claim("roles", getRoles(authentication))
+                .claim("permissions", getPermissions(authentication))
                 .build();
 
         JwtEncoder jwtEncoder = applicationContext.getBean("jwtEncoder", JwtEncoder.class);
+        return jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+    }
 
-        return jwtEncoder.encode(
-                JwtEncoderParameters.from(claims)
-        ).getTokenValue();
+    private List<String> getRoles(Authentication authentication) {
+        return authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .filter(authority -> authority.startsWith("ROLE_"))
+                .map(authority -> authority.substring(5)) // Remove "ROLE_" prefix
+                .collect(Collectors.toList());
+    }
+
+    private List<String> getPermissions(Authentication authentication) {
+        return authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .filter(authority -> !authority.startsWith("ROLE_"))
+                .collect(Collectors.toList());
     }
 
     private Object createClaims(Authentication authentication) {

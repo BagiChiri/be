@@ -6,6 +6,7 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.pos.be.repository.user.UserRepository;
+import com.pos.be.security.rbac.Permissions;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationContext;
@@ -16,11 +17,13 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -41,10 +44,16 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPublicKey;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.UUID;
 
 @Configuration
-@EnableMethodSecurity(prePostEnabled = true)
+@EnableMethodSecurity(
+        prePostEnabled = true,  // Enables @PreAuthorize, @PostAuthorize
+        securedEnabled = true,  // Enables @Secured
+        jsr250Enabled = true    // Enables @RolesAllowed (JSR-250)
+)
 @RequiredArgsConstructor
 public class JwtSecurityConfig {
     private static final String EXPECTED_ISSUER = "http://localhost:8080/pos";
@@ -56,10 +65,12 @@ public class JwtSecurityConfig {
         return httpSecurity
                 .authorizeHttpRequests(
                         auth -> auth
-                                .requestMatchers("/api/auth/login", "/uploads/**", "/api/auth/signup", "/active-users", "/api/auth/validate-token").permitAll()
-                                .requestMatchers("/products").permitAll()
-                                .requestMatchers(HttpMethod.PUT, "/products/{id}").authenticated()
-                                .requestMatchers(HttpMethod.DELETE, "/products/{id}").authenticated()
+                                .requestMatchers("/api/auth/**", "/uploads/**", "/active-users").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/products").hasAnyAuthority(Permissions.PRODUCT_VIEW, Permissions.FULL_ACCESS)
+                                .requestMatchers(HttpMethod.POST, "/products").hasAnyAuthority(Permissions.PRODUCT_MANAGE, Permissions.FULL_ACCESS)
+                                .requestMatchers(HttpMethod.PUT, "/products/**").hasAnyAuthority(Permissions.PRODUCT_MANAGE, Permissions.FULL_ACCESS)
+                                .requestMatchers(HttpMethod.DELETE, "/products/**").hasAnyAuthority(Permissions.PRODUCT_MANAGE, Permissions.FULL_ACCESS)
+                                .requestMatchers("/api/users/**").hasAnyAuthority(Permissions.USER_MANAGE, Permissions.FULL_ACCESS)
                                 .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -85,14 +96,26 @@ public class JwtSecurityConfig {
 //        };
 //    }
 
+    // Update in JwtSecurityConfig.java
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        grantedAuthoritiesConverter.setAuthoritiesClaimName("roles");
-        grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
+        grantedAuthoritiesConverter.setAuthoritiesClaimName("permissions");
+        grantedAuthoritiesConverter.setAuthorityPrefix("");
+
+        JwtGrantedAuthoritiesConverter roleAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+        roleAuthoritiesConverter.setAuthoritiesClaimName("roles");
+        roleAuthoritiesConverter.setAuthorityPrefix("ROLE_");
 
         JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
-        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(
+                jwt -> {
+                    Collection<GrantedAuthority> authorities = new ArrayList<>();
+                    authorities.addAll(grantedAuthoritiesConverter.convert(jwt));
+                    authorities.addAll(roleAuthoritiesConverter.convert(jwt));
+                    return authorities;
+                }
+        );
 
         return jwtAuthenticationConverter;
     }

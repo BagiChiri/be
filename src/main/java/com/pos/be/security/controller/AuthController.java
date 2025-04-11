@@ -1,13 +1,19 @@
 package com.pos.be.security.controller;
 
+import com.pos.be.entity.user.Role;
 import com.pos.be.entity.user.User;
+import com.pos.be.repository.user.RoleRepository;
+import com.pos.be.repository.user.UserRepository;
 import com.pos.be.security.AuthenticationService;
+import com.pos.be.security.rbac.Roles;
+import com.pos.be.security.rbac.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
@@ -22,6 +28,9 @@ public class AuthController {
 
     private final AuthenticationService authenticationService;
     private final JwtDecoder jwtDecoder;
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final ApplicationContext applicationContext;
 
     @PostMapping("/login")
     public AuthResponse login(
@@ -54,19 +63,31 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public String register(@RequestBody User user) throws RoleNotFoundException {
-        return authenticationService.register(user);
-    }
-
-    public void printCurrentUserDetails() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication != null) {
-            System.out.println("Authenticated user: " + authentication.getName());
-            System.out.println("Authorities: " + authentication.getAuthorities());
-            System.out.println("User details: " + authentication.getDetails());
-        } else {
-            System.out.println("No user is authenticated.");
+    // Update AuthenticationService.java
+    public String register(User user) throws RoleNotFoundException {
+        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
+            throw new IllegalArgumentException("Username already exists!");
         }
+
+        PasswordEncoder passwordEncoder = applicationContext.getBean(PasswordEncoder.class);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setEnabled(true);
+
+        // Assign default role if none provided
+        if (user.getRoles() == null || user.getRoles().isEmpty()) {
+            Role defaultRole = roleRepository.findByName(Roles.CUSTOMER)
+                    .orElseThrow(() -> new RoleNotFoundException("Default role not found"));
+            user.getRoles().add(defaultRole);
+        }
+
+        // For admin registration (should be protected)
+        if (user.getRoles().stream().anyMatch(r -> r.getName().equals(Roles.ADMIN))) {
+            if (!SecurityUtils.hasAnyRole(Roles.ADMIN)) {
+                throw new AccessDeniedException("Only admins can create admin users");
+            }
+        }
+
+        userRepository.save(user);
+        return "User registered successfully!";
     }
 }

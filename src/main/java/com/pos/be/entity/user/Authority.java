@@ -1,7 +1,10 @@
 package com.pos.be.entity.user;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.HashSet;
@@ -11,6 +14,8 @@ import java.util.Set;
 @Table(name = "authorities")
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class Authority {
 
     @Id
@@ -22,4 +27,9 @@ public class Authority {
 
     @ManyToMany(mappedBy = "authorities")
     private Set<User> users = new HashSet<>();
+
+
+    public Authority(String name) {
+        this.name = name;
+    }
 }

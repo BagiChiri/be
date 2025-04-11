@@ -60,10 +60,16 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        Set<GrantedAuthority> grantedAuthorities = roles.stream()
-                .map(role -> (GrantedAuthority) () -> /*"ROLE_" +*/ role.getName())
-                .collect(Collectors.toSet());
+        Set<GrantedAuthority> grantedAuthorities = new HashSet<>();
 
+        // Add roles with ROLE_ prefix
+        grantedAuthorities.addAll(
+                roles.stream()
+                        .map(role -> (GrantedAuthority) () -> "ROLE_" + role.getName())
+                        .collect(Collectors.toSet())
+        );
+
+        // Add permissions directly
         grantedAuthorities.addAll(
                 authorities.stream()
                         .map(authority -> (GrantedAuthority) () -> authority.getName())
