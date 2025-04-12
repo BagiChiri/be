@@ -19,4 +19,10 @@ public class CategoryDTO {
     private int itemCount;
     private int totalCategories;
     private int totalItems;
+
+    public CategoryDTO(Long id, String name, int itemCount) {
+        this.id = id;
+        this.name = name;
+        this.itemCount = itemCount;
+    }
 }
