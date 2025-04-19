@@ -24,8 +24,10 @@ public class Consignment {
     private LocalDateTime consignmentDate;
 
     private Double totalPrice;
+    private String customerName;
 
-    private String orderStatus;
+    @Enumerated(EnumType.STRING)
+    private ConsignmentStatus consignmentStatus;
 
     @OneToMany(mappedBy = "consignment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ConsignmentItem> consignmentItems = new ArrayList<>();

@@ -26,7 +26,8 @@ public class ConsignmentMapper {
         dto.setOrderNumber(entity.getConsignmentNumber());
         dto.setOrderDate(entity.getConsignmentDate());
         dto.setTotalPrice(entity.getTotalPrice());
-        dto.setOrderStatus(entity.getOrderStatus());
+        dto.setCustomerName(entity.getCustomerName());
+        dto.setConsignmentStatus(entity.getConsignmentStatus());
 
         if (entity.getConsignmentItems() != null) {
             dto.setOrderItems(
@@ -47,7 +48,8 @@ public class ConsignmentMapper {
         entity.setConsignmentNumber(dto.getOrderNumber());
         entity.setConsignmentDate(dto.getOrderDate());
         entity.setTotalPrice(dto.getTotalPrice());
-        entity.setOrderStatus(dto.getOrderStatus());
+        entity.setCustomerName(dto.getCustomerName());
+        entity.setConsignmentStatus(dto.getConsignmentStatus());
 
         List<ConsignmentItem> consignmentItems = new ArrayList<>();
         if (dto.getOrderItems() != null) {

@@ -57,12 +57,18 @@ package com.pos.be.controller.order;
 import com.pos.be.component.ConsignmentMapper;
 import com.pos.be.dto.order.ConsignmentDTO;
 import com.pos.be.entity.order.Consignment;
+import com.pos.be.request.ConsignmentStatusUpdateRequest;
 import com.pos.be.security.rbac.Permissions;
 import com.pos.be.service.order.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/order")
@@ -78,7 +84,6 @@ public class OrderController {
         this.consignmentMapper = consignmentMapper;
     }
 
-    // Get paginated orders, optionally searching by orderNumber
     @GetMapping("/by_name")
     @PreAuthorize("hasAuthority('" + Permissions.ORDER_VIEW + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public Page<ConsignmentDTO> getOrders(
@@ -90,14 +95,18 @@ public class OrderController {
                 .map(consignmentMapper::toDTO);
     }
 
-    // Fetch an order by ID
     @GetMapping("/by_id/{id}")
     @PreAuthorize("hasAuthority('" + Permissions.ORDER_VIEW + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ConsignmentDTO getOrderById(@PathVariable Long id) {
         return consignmentMapper.toDTO(orderService.getOrderById(id));
     }
 
-    // Create a new order
+    @GetMapping("/by_order_number/{orderNumber}")
+    @PreAuthorize("hasAuthority('" + Permissions.ORDER_VIEW + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
+    public ConsignmentDTO getOrderById(@PathVariable String orderNumber) {
+        return consignmentMapper.toDTO(orderService.getOrderByOrderNumber(orderNumber));
+    }
+
     @PostMapping
     @PreAuthorize("hasAuthority('" + Permissions.ORDER_CREATE + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ConsignmentDTO createOrder(@RequestBody ConsignmentDTO consignmentDTO) {
@@ -105,7 +114,6 @@ public class OrderController {
         return consignmentMapper.toDTO(orderService.createOrder(entityToCreate));
     }
 
-    // Update an existing order
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('" + Permissions.ORDER_MANAGE + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ConsignmentDTO updateOrder(@PathVariable Long id, @RequestBody ConsignmentDTO consignmentDTO) {
@@ -113,9 +121,27 @@ public class OrderController {
         return consignmentMapper.toDTO(orderService.updateOrder(id, entityToUpdate));
     }
 
-    // Delete an order
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('" + Permissions.ORDER_MANAGE + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public void deleteOrder(@PathVariable Long id) {
         orderService.deleteOrder(id);
-    }}
+    }
+
+    @GetMapping("/orderStatusSummary")
+    @PreAuthorize("hasAuthority('" + Permissions.ORDER_VIEW + "') or hasAnyAuthority('" + Permissions.FULL_ACCESS + "')")
+    public Map<String, Long> getConsignmentStatusSummary() {
+        try {
+            return orderService.getOrderStatusSummary();
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to fetch order status summary", e);
+        }
+    }
+
+    @PutMapping("/updateConsignmentStatus")
+    @PreAuthorize("hasAuthority('" + Permissions.ORDER_MANAGE + "') or hasAnyAuthority('" + Permissions.FULL_ACCESS + "')")
+    public ResponseEntity<?> updateConsignmentStatus(@RequestBody ConsignmentStatusUpdateRequest request) {
+        return orderService.updateConsignmentStatus(request.getConsignmentNumber(), request.getStatus());
+    }
+}
+
+

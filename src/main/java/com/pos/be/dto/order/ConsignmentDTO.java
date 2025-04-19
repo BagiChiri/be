@@ -17,6 +17,7 @@
 //}
 package com.pos.be.dto.order;
 
+import com.pos.be.entity.order.ConsignmentStatus;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -28,8 +29,9 @@ import java.util.List;
 public class ConsignmentDTO {
     private Long id;
     private String orderNumber;
+    private String customerName;
     private LocalDateTime orderDate;
     private Double totalPrice;     // Matches "totalPrice" in your frontend
-    private String orderStatus;    // Matches "orderStatus" in your frontend
+    private ConsignmentStatus consignmentStatus;    // Matches "consignmentStatus" in your frontend
     private List<ConsignmentItemDTO> orderItems;
 }

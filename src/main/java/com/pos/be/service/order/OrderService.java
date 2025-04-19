@@ -2,6 +2,7 @@ package com.pos.be.service.order;
 
 import com.pos.be.entity.order.Consignment;
 import com.pos.be.entity.order.ConsignmentItem;
+import com.pos.be.entity.order.ConsignmentStatus;
 import com.pos.be.exception.PermissionDeniedException;
 import com.pos.be.repository.order.ConsignmentItemRepository;
 import com.pos.be.repository.order.ConsignmentRepository;
@@ -9,14 +10,19 @@ import com.pos.be.repository.product.ProductRepository;
 import com.pos.be.security.rbac.Permissions;
 import com.pos.be.security.rbac.SecurityUtils;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -33,15 +39,18 @@ public class OrderService {
             throw new PermissionDeniedException("You don't have permission to view orders");
         }
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+        Pageable pageable = PageRequest.of(page, size, Sort.by("consignmentId").descending());
+
         if (searchTerm != null && !searchTerm.isEmpty()) {
             return consignmentRepository.findAll(
-                    (root, query, cb) -> cb.like(root.get("orderNumber"), "%" + searchTerm + "%"),
+                    (root, query, cb) -> cb.like(cb.lower(root.get("customerName")), "%" + searchTerm.toLowerCase() + "%"),
                     pageable
             );
         }
+
         return consignmentRepository.findAll(pageable);
     }
+
 
     @PreAuthorize("hasAuthority('" + Permissions.ORDER_VIEW + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public Consignment getOrderById(Long id) {
@@ -54,6 +63,17 @@ public class OrderService {
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + id));
     }
 
+    @PreAuthorize("hasAuthority('" + Permissions.ORDER_VIEW + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
+    public Consignment getOrderByOrderNumber(String orderNumber) {
+        // Additional service-level permission check
+        if (!SecurityUtils.hasPermission(Permissions.ORDER_VIEW)) {
+            throw new PermissionDeniedException("You don't have permission to view orders");
+        }
+
+        return consignmentRepository.findByConsignmentNumber(orderNumber)
+                .orElseThrow(() -> new RuntimeException("Order not found with orderNumber: " + orderNumber));
+    }
+
     @Transactional
     @PreAuthorize("hasAuthority('" + Permissions.ORDER_CREATE + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public Consignment createOrder(Consignment consignment) {
@@ -63,6 +83,8 @@ public class OrderService {
         }
 
         consignment.setConsignmentDate(LocalDateTime.now());
+        consignment.setConsignmentStatus(consignment.getConsignmentStatus() == null ? ConsignmentStatus.PENDING : consignment.getConsignmentStatus());
+        consignment.setConsignmentNumber(generateOrderNumber());
         consignment = consignmentRepository.save(consignment);
 
         double totalPrice = 0.0;
@@ -92,6 +114,18 @@ public class OrderService {
         return consignmentRepository.save(consignment);
     }
 
+    private static String generateOrderNumber() {
+        String prefix = "ORD";
+
+        // Format: YYYYMMDDHHMMSS
+        String timeStamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+
+        // Generate a 4-digit random number
+        int randomNum = 1000 + new Random().nextInt(9000);
+
+        return prefix + "-" + timeStamp + "-" + randomNum;
+    }
+
     @PreAuthorize("hasAuthority('" + Permissions.ORDER_MANAGE + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public Consignment updateOrder(Long id, Consignment updatedConsignment) {
         // Additional service-level permission check
@@ -101,7 +135,7 @@ public class OrderService {
 
         Consignment existing = getOrderById(id);
         existing.setConsignmentNumber(updatedConsignment.getConsignmentNumber());
-        existing.setOrderStatus(updatedConsignment.getOrderStatus());
+        existing.setConsignmentStatus(updatedConsignment.getConsignmentStatus());
         existing.setConsignmentDate(updatedConsignment.getConsignmentDate());
         existing.getConsignmentItems().clear();
 
@@ -127,4 +161,45 @@ public class OrderService {
         Consignment consignment = getOrderById(id);
         consignmentRepository.delete(consignment);
     }
+
+    @PreAuthorize("hasAuthority('" + Permissions.ORDER_VIEW + "') or hasAnyAuthority('" + Permissions.FULL_ACCESS + "')")
+    public Map<String, Long> getOrderStatusSummary() {
+        if (!SecurityUtils.hasPermission(Permissions.ORDER_VIEW)) {
+            throw new PermissionDeniedException("You don't have permission to view orders");
+        }
+        try {
+            Map<ConsignmentStatus, Long> orderStatusSummary = new EnumMap<>(ConsignmentStatus.class);
+            for (ConsignmentStatus status : ConsignmentStatus.values()) {
+                long count = consignmentRepository.countByConsignmentStatus(status);
+                orderStatusSummary.put(status, count);
+            }
+
+            Map<String, Long> result = new HashMap<>();
+            for (Map.Entry<ConsignmentStatus, Long> entry : orderStatusSummary.entrySet()) {
+                result.put(entry.getKey().name(), entry.getValue());
+            }
+            return result;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get order status summary", e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('" + Permissions.ORDER_MANAGE + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
+    public ResponseEntity<?> updateConsignmentStatus(String consignmentNumber, ConsignmentStatus status) {
+
+        if (!SecurityUtils.hasPermission(Permissions.ORDER_VIEW)) {
+            throw new PermissionDeniedException("You don't have permission to view orders");
+        }
+
+
+        return consignmentRepository.findByConsignmentNumber(consignmentNumber)
+                .map(consignment -> {
+                    consignment.setConsignmentStatus(status);
+                    consignmentRepository.save(consignment);
+                    return ResponseEntity.ok("Consignment status updated successfully.");
+                })
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("Consignment with number: " + consignmentNumber + " not found."));
+    }
+
 }
