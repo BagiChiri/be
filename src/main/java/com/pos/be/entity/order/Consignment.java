@@ -1,5 +1,6 @@
 package com.pos.be.entity.order;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -30,8 +31,8 @@ public class Consignment {
     private ConsignmentStatus consignmentStatus;
 
     @OneToMany(mappedBy = "consignment", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference // Prevents recursion during serialization
     private List<ConsignmentItem> consignmentItems = new ArrayList<>();
-
 
 
     // Helper method to add items

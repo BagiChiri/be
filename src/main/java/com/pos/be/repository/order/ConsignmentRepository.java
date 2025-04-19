@@ -2,6 +2,8 @@ package com.pos.be.repository.order;
 
 import com.pos.be.entity.order.Consignment;
 import com.pos.be.entity.order.ConsignmentStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -20,4 +22,8 @@ public interface ConsignmentRepository extends JpaRepository<Consignment, Long>,
     long countByConsignmentStatus(ConsignmentStatus consignmentStatus);
 
     Optional<Consignment> findByConsignmentNumber(String consignmentNumber);
+    Page<Consignment> findByCustomerNameContainingIgnoreCase(
+            String customerName,
+            Pageable pageable
+    );
 }

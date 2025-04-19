@@ -8,6 +8,7 @@ import com.pos.be.entity.order.ConsignmentItem;
 import com.pos.be.repository.product.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,13 +18,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ConsignmentMapper {
 
+    @Transactional
     public ConsignmentDTO toDTO(Consignment entity) {
         if (entity == null) {
             return null;
         }
         ConsignmentDTO dto = new ConsignmentDTO();
         dto.setId(entity.getConsignmentId());
-        dto.setOrderNumber(entity.getConsignmentNumber());
+        dto.setConsignmentNumber(entity.getConsignmentNumber());
         dto.setOrderDate(entity.getConsignmentDate());
         dto.setTotalPrice(entity.getTotalPrice());
         dto.setCustomerName(entity.getCustomerName());
@@ -39,13 +41,14 @@ public class ConsignmentMapper {
         return dto;
     }
 
+
     public Consignment toEntity(ConsignmentDTO dto) {
         if (dto == null) {
             return null;
         }
         Consignment entity = new Consignment();
         entity.setConsignmentId(dto.getId());
-        entity.setConsignmentNumber(dto.getOrderNumber());
+        entity.setConsignmentNumber(dto.getConsignmentNumber());
         entity.setConsignmentDate(dto.getOrderDate());
         entity.setTotalPrice(dto.getTotalPrice());
         entity.setCustomerName(dto.getCustomerName());

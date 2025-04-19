@@ -60,8 +60,13 @@ import com.pos.be.entity.order.Consignment;
 import com.pos.be.request.ConsignmentStatusUpdateRequest;
 import com.pos.be.security.rbac.Permissions;
 import com.pos.be.service.order.OrderService;
+import com.pos.be.specification.GenericSpecification;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -84,15 +89,10 @@ public class OrderController {
         this.consignmentMapper = consignmentMapper;
     }
 
-    @GetMapping("/by_name")
+    @GetMapping
     @PreAuthorize("hasAuthority('" + Permissions.ORDER_VIEW + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
-    public Page<ConsignmentDTO> getOrders(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size,
-            @RequestParam(required = false) String query
-    ) {
-        return orderService.getOrders(page, size, query)
-                .map(consignmentMapper::toDTO);
+    public Page<Consignment> getOrders(@RequestParam Map<String, String> filters, Pageable pageable) {
+        return orderService.getOrders(filters, pageable); // paging and sorting handled!
     }
 
     @GetMapping("/by_id/{id}")
@@ -101,10 +101,10 @@ public class OrderController {
         return consignmentMapper.toDTO(orderService.getOrderById(id));
     }
 
-    @GetMapping("/by_order_number/{orderNumber}")
+    @GetMapping("/by_consignment_number/{consignmentNumber}")
     @PreAuthorize("hasAuthority('" + Permissions.ORDER_VIEW + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
-    public ConsignmentDTO getOrderById(@PathVariable String orderNumber) {
-        return consignmentMapper.toDTO(orderService.getOrderByOrderNumber(orderNumber));
+    public ConsignmentDTO getOrderByOrderNumber(@PathVariable String consignmentNumber) {
+        return consignmentMapper.toDTO(orderService.getOrderByOrderNumber(consignmentNumber));
     }
 
     @PostMapping

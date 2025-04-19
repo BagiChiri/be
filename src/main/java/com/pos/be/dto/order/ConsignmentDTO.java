@@ -28,7 +28,7 @@ import java.util.List;
 @Setter
 public class ConsignmentDTO {
     private Long id;
-    private String orderNumber;
+    private String consignmentNumber;
     private String customerName;
     private LocalDateTime orderDate;
     private Double totalPrice;     // Matches "totalPrice" in your frontend

@@ -9,11 +9,13 @@ import com.pos.be.repository.order.ConsignmentRepository;
 import com.pos.be.repository.product.ProductRepository;
 import com.pos.be.security.rbac.Permissions;
 import com.pos.be.security.rbac.SecurityUtils;
+import com.pos.be.specification.GenericSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -33,23 +35,16 @@ public class OrderService {
     private final ConsignmentItemRepository consignmentItemRepository;
 
     @PreAuthorize("hasAuthority('" + Permissions.ORDER_VIEW + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
-    public Page<Consignment> getOrders(int page, int size, String searchTerm) {
-        // Additional service-level permission check
+    public Page<Consignment> getOrders(Map<String, String> filters, Pageable pageable) {
+        // extra guard (optional)
         if (!SecurityUtils.hasPermission(Permissions.ORDER_VIEW)) {
             throw new PermissionDeniedException("You don't have permission to view orders");
         }
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by("consignmentId").descending());
-
-        if (searchTerm != null && !searchTerm.isEmpty()) {
-            return consignmentRepository.findAll(
-                    (root, query, cb) -> cb.like(cb.lower(root.get("customerName")), "%" + searchTerm.toLowerCase() + "%"),
-                    pageable
-            );
-        }
-
-        return consignmentRepository.findAll(pageable);
+        Specification<Consignment> specification = new GenericSpecification<>(filters, Consignment.class);
+        return consignmentRepository.findAll(specification, pageable);
     }
+
 
 
     @PreAuthorize("hasAuthority('" + Permissions.ORDER_VIEW + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
@@ -71,7 +66,7 @@ public class OrderService {
         }
 
         return consignmentRepository.findByConsignmentNumber(orderNumber)
-                .orElseThrow(() -> new RuntimeException("Order not found with orderNumber: " + orderNumber));
+                .orElseThrow(() -> new RuntimeException("Order not found with consignmentNumber: " + orderNumber));
     }
 
     @Transactional
