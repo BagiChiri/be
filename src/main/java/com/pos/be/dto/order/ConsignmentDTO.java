@@ -34,4 +34,5 @@ public class ConsignmentDTO {
     private Double totalPrice;     // Matches "totalPrice" in your frontend
     private ConsignmentStatus consignmentStatus;    // Matches "consignmentStatus" in your frontend
     private List<ConsignmentItemDTO> orderItems;
+    private Long transactionId;
 }

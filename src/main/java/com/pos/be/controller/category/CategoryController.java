@@ -95,31 +95,31 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @PostMapping
-    @PreAuthorize("hasAuthority('" + Permissions.CATEGORY_MANAGE + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
+    @PreAuthorize("hasAuthority('" + Permissions.CREATE_CATEGORY + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ResponseEntity<?> add(@Valid @RequestBody CategoryDTO request) {
         return categoryService.save(request);
     }
 
     @PutMapping
-    @PreAuthorize("hasAuthority('" + Permissions.CATEGORY_MANAGE + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
+    @PreAuthorize("hasAuthority('" + Permissions.UPDATE_CATEGORY + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ResponseEntity<?> update(@RequestBody CategoryDTO request) {
         return categoryService.update(request);
     }
 
     @GetMapping("/by_name")
-    @PreAuthorize("hasAuthority('" + Permissions.CATEGORY_VIEW + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
+    @PreAuthorize("hasAuthority('" + Permissions.READ_CATEGORY + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ResponseEntity<?> getAllCategories(@RequestParam(required = false) String query, Pageable pageable) {
         return categoryService.getAll(query, pageable);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('" + Permissions.CATEGORY_VIEW + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
+    @PreAuthorize("hasAuthority('" + Permissions.READ_CATEGORY + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ResponseEntity<CategoryDTO> get(@PathVariable Long id) {
         return ResponseEntity.ok(categoryService.get(id));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('" + Permissions.CATEGORY_MANAGE + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
+    @PreAuthorize("hasAuthority('" + Permissions.DELETE_CATEGORY + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         return categoryService.delete(id);
     }

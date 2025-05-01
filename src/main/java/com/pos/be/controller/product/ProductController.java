@@ -109,7 +109,7 @@ public class ProductController {
     private final ProductService productService;
 
     @PostMapping
-    @PreAuthorize("hasAuthority('" + Permissions.PRODUCT_MANAGE + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
+    @PreAuthorize("hasAuthority('" + Permissions.CREATE_PRODUCT + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ResponseEntity<?> add(@RequestBody @Valid ProductDTO request) {
         try {
             return productService.saveWithImages(request, null);
@@ -120,7 +120,7 @@ public class ProductController {
     }
 
     @PostMapping(value = "/with-images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAuthority('" + Permissions.PRODUCT_MANAGE + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
+    @PreAuthorize("hasAuthority('" + Permissions.CREATE_PRODUCT + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ResponseEntity<?> addProductWithImages(
             @RequestPart("product") @Valid ProductDTO productDTO,
             @RequestPart(value = "images", required = false) MultipartFile[] images) {
@@ -133,7 +133,7 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('" + Permissions.PRODUCT_MANAGE + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
+    @PreAuthorize("hasAuthority('" + Permissions.UPDATE_PRODUCT + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody @Valid ProductDTO request) {
         try {
             request.setId(id);
@@ -145,7 +145,7 @@ public class ProductController {
     }
 
     @PutMapping(value = "/{id}/with-images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAuthority('" + Permissions.PRODUCT_MANAGE + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
+    @PreAuthorize("hasAuthority('" + Permissions.UPDATE_PRODUCT + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ResponseEntity<?> updateProductWithImages(
             @PathVariable Long id,
             @RequestPart("product") @Valid ProductDTO productDTO,
@@ -160,7 +160,7 @@ public class ProductController {
     }
 
     @GetMapping("/by_id/{id}")
-    @PreAuthorize("hasAuthority('" + Permissions.PRODUCT_VIEW + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
+    @PreAuthorize("hasAuthority('" + Permissions.READ_PRODUCT + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ResponseEntity<?> getById(@PathVariable Long id) {
         try {
             return productService.get(id);
@@ -171,7 +171,7 @@ public class ProductController {
     }
 
     @GetMapping("/detail/{id}")
-    @PreAuthorize("hasAuthority('" + Permissions.PRODUCT_VIEW + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
+    @PreAuthorize("hasAuthority('" + Permissions.READ_PRODUCT + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ResponseEntity<?> getDetailedProduct(@PathVariable Long id) {
         try {
             return productService.getDetailedProduct(id);
@@ -182,7 +182,7 @@ public class ProductController {
     }
 
     @GetMapping("/by_name")
-    @PreAuthorize("hasAuthority('" + Permissions.PRODUCT_VIEW + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
+    @PreAuthorize("hasAuthority('" + Permissions.READ_PRODUCT + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ResponseEntity<?> get(@RequestParam(required = false) String query, Pageable pageable) {
         try {
             Page<ProductDTO> page = productService.getProducts(query, pageable);
@@ -194,7 +194,7 @@ public class ProductController {
     }
 
     @GetMapping("/by_category/{categoryId}")
-    @PreAuthorize("hasAuthority('" + Permissions.PRODUCT_VIEW + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
+    @PreAuthorize("hasAuthority('" + Permissions.READ_PRODUCT + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ResponseEntity<?> getByCategory(
             @PathVariable Long categoryId,
             @RequestParam(required = false) String query,
@@ -208,7 +208,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('" + Permissions.PRODUCT_MANAGE + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
+    @PreAuthorize("hasAuthority('" + Permissions.DELETE_PRODUCT + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         try {
             return productService.delete(id);

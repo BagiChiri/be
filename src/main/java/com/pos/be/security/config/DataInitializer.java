@@ -50,18 +50,66 @@ public class DataInitializer implements CommandLineRunner {
         if (authorityRepository.count() == 0) {
             List<Authority> authorities = Arrays.asList(
                     new Authority(Permissions.FULL_ACCESS),
-                    new Authority(Permissions.PRODUCT_VIEW),
-                    new Authority(Permissions.PRODUCT_MANAGE),
-                    new Authority(Permissions.CATEGORY_VIEW),
-                    new Authority(Permissions.CATEGORY_MANAGE),
-                    new Authority(Permissions.ORDER_VIEW),
-                    new Authority(Permissions.ORDER_CREATE),
-                    new Authority(Permissions.ORDER_MANAGE),
-                    new Authority(Permissions.USER_MANAGE)
+
+                    // Product
+                    new Authority(Permissions.CREATE_PRODUCT),
+                    new Authority(Permissions.READ_PRODUCT),
+                    new Authority(Permissions.UPDATE_PRODUCT),
+                    new Authority(Permissions.DELETE_PRODUCT),
+
+                    // Category
+                    new Authority(Permissions.CREATE_CATEGORY),
+                    new Authority(Permissions.READ_CATEGORY),
+                    new Authority(Permissions.UPDATE_CATEGORY),
+                    new Authority(Permissions.DELETE_CATEGORY),
+
+                    // Order
+                    new Authority(Permissions.CREATE_ORDER),
+                    new Authority(Permissions.READ_ORDER),
+                    new Authority(Permissions.UPDATE_ORDER),
+                    new Authority(Permissions.DELETE_ORDER),
+
+                    // User
+                    new Authority(Permissions.CREATE_USER),
+                    new Authority(Permissions.READ_USER),
+                    new Authority(Permissions.UPDATE_USER),
+                    new Authority(Permissions.DELETE_USER),
+
+                    //Transaction
+                    new Authority(Permissions.CREATE_TRANSACTION),
+                    new Authority(Permissions.READ_TRANSACTION),
+                    new Authority(Permissions.UPDATE_TRANSACTION),
+                    new Authority(Permissions.DELETE_TRANSACTION),
+
+                    // Role
+                    new Authority(Permissions.CREATE_ROLE),
+                    new Authority(Permissions.READ_ROLE),
+                    new Authority(Permissions.UPDATE_ROLE),
+                    new Authority(Permissions.DELETE_ROLE),
+
+                    // Permission / Authority
+                    new Authority(Permissions.CREATE_PERMISSION),
+                    new Authority(Permissions.READ_PERMISSION),
+                    new Authority(Permissions.UPDATE_PERMISSION),
+                    new Authority(Permissions.DELETE_PERMISSION),
+
+                    // Merchant Store
+                    new Authority(Permissions.CREATE_MERCHANT),
+                    new Authority(Permissions.READ_MERCHANT),
+                    new Authority(Permissions.UPDATE_MERCHANT),
+                    new Authority(Permissions.DELETE_MERCHANT),
+
+                    // Customer (optional)
+                    new Authority(Permissions.CREATE_CUSTOMER),
+                    new Authority(Permissions.READ_CUSTOMER),
+                    new Authority(Permissions.UPDATE_CUSTOMER),
+                    new Authority(Permissions.DELETE_CUSTOMER)
             );
+
             authorityRepository.saveAll(authorities);
         }
     }
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -102,18 +150,26 @@ public class DataInitializer implements CommandLineRunner {
 
     private void initializeSalesUser() {
         if (!userRepository.existsByUsername("sales")) {
-            // Fetch authorities from DB
             Set<Authority> salesPermissions = new HashSet<>();
-            salesPermissions.add(authorityRepository.findByName(Permissions.CATEGORY_VIEW)
-                    .orElseThrow(() -> new RuntimeException("Authority CATEGORY_VIEW not found")));
-            salesPermissions.add(authorityRepository.findByName(Permissions.ORDER_VIEW)
-                    .orElseThrow(() -> new RuntimeException("Authority ORDER_VIEW not found")));
-            salesPermissions.add(authorityRepository.findByName(Permissions.ORDER_CREATE)
-                    .orElseThrow(() -> new RuntimeException("Authority ORDER_CREATE not found")));
-            salesPermissions.add(authorityRepository.findByName(Permissions.PRODUCT_VIEW)
-                    .orElseThrow(() -> new RuntimeException("Authority PRODUCT_VIEW not found")));
-            salesPermissions.add(authorityRepository.findByName(Permissions.ORDER_MANAGE)
-                    .orElseThrow(() -> new RuntimeException("Authority ORDER_MANAGE not found")));
+            salesPermissions.add(authorityRepository.findByName(Permissions.READ_CATEGORY)
+                    .orElseThrow(() -> new RuntimeException("Authority READ_CATEGORY not found")));
+            salesPermissions.add(authorityRepository.findByName(Permissions.READ_ORDER)
+                    .orElseThrow(() -> new RuntimeException("Authority READ_ORDER not found")));
+            salesPermissions.add(authorityRepository.findByName(Permissions.CREATE_ORDER)
+                    .orElseThrow(() -> new RuntimeException("Authority CREATE_ORDER not found")));
+            salesPermissions.add(authorityRepository.findByName(Permissions.UPDATE_ORDER)
+                    .orElseThrow(() -> new RuntimeException("Authority UPDATE_ORDER not found")));
+            salesPermissions.add(authorityRepository.findByName(Permissions.READ_PRODUCT)
+                    .orElseThrow(() -> new RuntimeException("Authority READ_PRODUCT not found")));
+
+            salesPermissions.add(authorityRepository.findByName(Permissions.READ_TRANSACTION)
+                    .orElseThrow(() -> new RuntimeException("Authority READ_TRANSACTION not found")));
+            salesPermissions.add(authorityRepository.findByName(Permissions.DELETE_TRANSACTION)
+                    .orElseThrow(() -> new RuntimeException("Authority DELETE_TRANSACTION not found")));
+            salesPermissions.add(authorityRepository.findByName(Permissions.CREATE_TRANSACTION)
+                    .orElseThrow(() -> new RuntimeException("Authority CREATE_TRANSACTION not found")));
+            salesPermissions.add(authorityRepository.findByName(Permissions.UPDATE_TRANSACTION)
+                    .orElseThrow(() -> new RuntimeException("Authority UPDATE_TRANSACTION not found")));
 
             Role salesRole = roleRepository.findByName(Roles.SALES)
                     .orElseThrow(() -> new RuntimeException("Sales role not found"));
@@ -138,19 +194,26 @@ public class DataInitializer implements CommandLineRunner {
             System.out.println("==============================================");
         }
     }
-
     private void initializeInventoryUser() {
         if (!userRepository.existsByUsername("inventory")) {
-            // Fetch authorities from DB
             Set<Authority> inventoryPermissions = new HashSet<>();
-            inventoryPermissions.add(authorityRepository.findByName(Permissions.PRODUCT_VIEW)
-                    .orElseThrow(() -> new RuntimeException("Authority PRODUCT_VIEW not found")));
-            inventoryPermissions.add(authorityRepository.findByName(Permissions.PRODUCT_MANAGE)
-                    .orElseThrow(() -> new RuntimeException("Authority PRODUCT_MANAGE not found")));
-            inventoryPermissions.add(authorityRepository.findByName(Permissions.CATEGORY_VIEW)
-                    .orElseThrow(() -> new RuntimeException("Authority CATEGORY_VIEW not found")));
-            inventoryPermissions.add(authorityRepository.findByName(Permissions.CATEGORY_MANAGE)
-                    .orElseThrow(() -> new RuntimeException("Authority CATEGORY_MANAGE not found")));
+            inventoryPermissions.add(authorityRepository.findByName(Permissions.READ_PRODUCT)
+                    .orElseThrow(() -> new RuntimeException("Authority READ_PRODUCT not found")));
+            inventoryPermissions.add(authorityRepository.findByName(Permissions.CREATE_PRODUCT)
+                    .orElseThrow(() -> new RuntimeException("Authority CREATE_PRODUCT not found")));
+            inventoryPermissions.add(authorityRepository.findByName(Permissions.UPDATE_PRODUCT)
+                    .orElseThrow(() -> new RuntimeException("Authority UPDATE_PRODUCT not found")));
+            inventoryPermissions.add(authorityRepository.findByName(Permissions.DELETE_PRODUCT)
+                    .orElseThrow(() -> new RuntimeException("Authority DELETE_PRODUCT not found")));
+
+            inventoryPermissions.add(authorityRepository.findByName(Permissions.READ_CATEGORY)
+                    .orElseThrow(() -> new RuntimeException("Authority READ_CATEGORY not found")));
+            inventoryPermissions.add(authorityRepository.findByName(Permissions.CREATE_CATEGORY)
+                    .orElseThrow(() -> new RuntimeException("Authority CREATE_CATEGORY not found")));
+            inventoryPermissions.add(authorityRepository.findByName(Permissions.UPDATE_CATEGORY)
+                    .orElseThrow(() -> new RuntimeException("Authority UPDATE_CATEGORY not found")));
+            inventoryPermissions.add(authorityRepository.findByName(Permissions.DELETE_CATEGORY)
+                    .orElseThrow(() -> new RuntimeException("Authority DELETE_CATEGORY not found")));
 
             Role inventoryRole = roleRepository.findByName("INVENTORY")
                     .orElseThrow(() -> new RuntimeException("Inventory role not found"));
@@ -175,5 +238,6 @@ public class DataInitializer implements CommandLineRunner {
             System.out.println("==============================================");
         }
     }
+
 
 }

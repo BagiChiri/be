@@ -66,11 +66,15 @@ public class JwtSecurityConfig {
                 .authorizeHttpRequests(
                         auth -> auth
                                 .requestMatchers("/api/auth/**", "/uploads/**", "/active-users").permitAll()
-                                .requestMatchers(HttpMethod.GET, "/products").hasAnyAuthority(Permissions.PRODUCT_VIEW, Permissions.FULL_ACCESS)
-                                .requestMatchers(HttpMethod.POST, "/products").hasAnyAuthority(Permissions.PRODUCT_MANAGE, Permissions.FULL_ACCESS)
-                                .requestMatchers(HttpMethod.PUT, "/products/**").hasAnyAuthority(Permissions.PRODUCT_MANAGE, Permissions.FULL_ACCESS)
-                                .requestMatchers(HttpMethod.DELETE, "/products/**").hasAnyAuthority(Permissions.PRODUCT_MANAGE, Permissions.FULL_ACCESS)
-                                .requestMatchers("/api/users/**").hasAnyAuthority(Permissions.USER_MANAGE, Permissions.FULL_ACCESS)
+                                // Product endpoints
+                                .requestMatchers(HttpMethod.GET, "/products").hasAnyAuthority(Permissions.READ_PRODUCT, Permissions.FULL_ACCESS)
+                                .requestMatchers(HttpMethod.POST, "/products").hasAnyAuthority(Permissions.CREATE_PRODUCT, Permissions.FULL_ACCESS)
+                                .requestMatchers(HttpMethod.PUT, "/products/**").hasAnyAuthority(Permissions.UPDATE_PRODUCT, Permissions.FULL_ACCESS)
+                                .requestMatchers(HttpMethod.DELETE, "/products/**").hasAnyAuthority(Permissions.DELETE_PRODUCT, Permissions.FULL_ACCESS)
+
+                                // User management
+                                .requestMatchers("/api/users/**").hasAnyAuthority(Permissions.FULL_ACCESS)
+
                                 .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

@@ -574,8 +574,11 @@ public class ProductService {
     @Value("${file.upload.url-path}")
     private String uploadDir;
 
-    @PreAuthorize("hasAuthority('" + Permissions.PRODUCT_MANAGE + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
+    @PreAuthorize("hasAuthority('" + Permissions.CREATE_PRODUCT + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ResponseEntity<?> saveWithImages(ProductDTO dto, MultipartFile[] images) {
+        if (!SecurityUtils.hasPermission(Permissions.CREATE_PRODUCT)) {
+            throw new PermissionDeniedException("You don't have permission to view categories");
+        }
         try {
             // Check for a duplicate id on save (should be null/new product)
             if (dto.getId() != null) {
@@ -696,12 +699,13 @@ public class ProductService {
         }
     }
 
-    @PreAuthorize("hasAuthority('" + Permissions.PRODUCT_MANAGE + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
+    @PreAuthorize("hasAuthority('" + Permissions.UPDATE_PRODUCT + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ResponseEntity<?> updateWithImages(ProductDTO dto, MultipartFile[] images) {
+        if (!SecurityUtils.hasPermission(Permissions.UPDATE_PRODUCT)) {
+            throw new PermissionDeniedException("You don't have permission to update products");
+        }
         try {
-            if (!SecurityUtils.hasPermission(Permissions.PRODUCT_MANAGE)) {
-                throw new PermissionDeniedException("You don't have permission to update products");
-            }
+
             Optional<Product> productOpt = productRepository.findById(dto.getId());
             if (!productOpt.isPresent()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -827,12 +831,12 @@ public class ProductService {
         }
     }
 
-    @PreAuthorize("hasAuthority('" + Permissions.PRODUCT_VIEW + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
+    @PreAuthorize("hasAuthority('" + Permissions.READ_PRODUCT + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ResponseEntity<?> getProductsByCategory(Long categoryId, String query, Pageable pageable) {
+        if (!SecurityUtils.hasPermission(Permissions.READ_PRODUCT)) {
+            throw new PermissionDeniedException("You don't have permission to view products");
+        }
         try {
-            if (!SecurityUtils.hasPermission(Permissions.PRODUCT_VIEW)) {
-                throw new PermissionDeniedException("You don't have permission to view products");
-            }
             Page<Product> page;
 
             if (query != null && !query.trim().isEmpty()) {
@@ -869,12 +873,12 @@ public class ProductService {
         }
     }
 
-    @PreAuthorize("hasAuthority('" + Permissions.PRODUCT_VIEW + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
+    @PreAuthorize("hasAuthority('" + Permissions.READ_PRODUCT + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ResponseEntity<?> get(Long id) {
+        if (!SecurityUtils.hasPermission(Permissions.READ_PRODUCT)) {
+            throw new PermissionDeniedException("You don't have permission to view products");
+        }
         try {
-            if (!SecurityUtils.hasPermission(Permissions.PRODUCT_VIEW)) {
-                throw new PermissionDeniedException("You don't have permission to view products");
-            }
             Optional<Product> productOpt = productRepository.findById(id);
             if (productOpt.isPresent()) {
                 return ResponseEntity.ok(convertToDTO(productOpt.get()));
@@ -887,9 +891,9 @@ public class ProductService {
         }
     }
 
-    @PreAuthorize("hasAuthority('" + Permissions.PRODUCT_VIEW + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
+    @PreAuthorize("hasAuthority('" + Permissions.READ_PRODUCT + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public Page<ProductDTO> getProducts(String name, Pageable pageable) {
-        if (!SecurityUtils.hasPermission(Permissions.PRODUCT_VIEW)) {
+        if (!SecurityUtils.hasPermission(Permissions.READ_PRODUCT)) {
             throw new PermissionDeniedException("You don't have permission to view products");
         }
         Page<Product> productsPage;
@@ -905,12 +909,12 @@ public class ProductService {
         return new PageImpl<>(dtos, pageable, productsPage.getTotalElements());
     }
 
-    @PreAuthorize("hasAuthority('" + Permissions.PRODUCT_VIEW + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
+    @PreAuthorize("hasAuthority('" + Permissions.READ_PRODUCT + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ResponseEntity<?> getDetailedProduct(Long id) {
+        if (!SecurityUtils.hasPermission(Permissions.READ_PRODUCT)) {
+            throw new PermissionDeniedException("You don't have permission to view product details");
+        }
         try {
-            if (!SecurityUtils.hasPermission(Permissions.PRODUCT_VIEW)) {
-                throw new PermissionDeniedException("You don't have permission to view product details");
-            }
             Object details = productRepository.getProductDetailsById(id);
             if (details == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -923,12 +927,12 @@ public class ProductService {
         }
     }
 
-    @PreAuthorize("hasAuthority('" + Permissions.PRODUCT_MANAGE + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
+    @PreAuthorize("hasAuthority('" + Permissions.DELETE_PRODUCT + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ResponseEntity<?> delete(Long id) {
+        if (!SecurityUtils.hasPermission(Permissions.DELETE_PRODUCT)) {
+            throw new PermissionDeniedException("You don't have permission to delete products");
+        }
         try {
-            if (!SecurityUtils.hasPermission(Permissions.PRODUCT_MANAGE)) {
-                throw new PermissionDeniedException("You don't have permission to delete products");
-            }
             Optional<Product> productOpt = productRepository.findById(id);
             if (!productOpt.isPresent()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)

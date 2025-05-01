@@ -472,9 +472,9 @@ import java.util.stream.Collectors;
 public class CategoryService {
     private final CategoryRepository categoryRepository;
 
-    @PreAuthorize("hasAuthority('" + Permissions.CATEGORY_MANAGE + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
+    @PreAuthorize("hasAuthority('" + Permissions.CREATE_CATEGORY + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ResponseEntity<CategoryDTO> save(CategoryDTO request) {
-        if (!SecurityUtils.hasPermission(Permissions.CATEGORY_MANAGE)) {
+        if (!SecurityUtils.hasPermission(Permissions.CREATE_CATEGORY)) {
             throw new PermissionDeniedException("You don't have permission to create categories");
         }
 
@@ -483,9 +483,9 @@ public class CategoryService {
         return ResponseEntity.ok(categoryDTO);
     }
 
-    @PreAuthorize("hasAuthority('" + Permissions.CATEGORY_MANAGE + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
+    @PreAuthorize("hasAuthority('" + Permissions.UPDATE_CATEGORY + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ResponseEntity<String> update(CategoryDTO request) {
-        if (!SecurityUtils.hasPermission(Permissions.CATEGORY_MANAGE)) {
+        if (!SecurityUtils.hasPermission(Permissions.UPDATE_CATEGORY)) {
             throw new PermissionDeniedException("You don't have permission to update categories");
         }
 
@@ -497,16 +497,19 @@ public class CategoryService {
         return ResponseEntity.ok("Updated Successfully.");
     }
 
-    @PreAuthorize("hasAuthority('" + Permissions.CATEGORY_VIEW + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
+    @PreAuthorize("hasAuthority('" + Permissions.READ_CATEGORY + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public CategoryDTO get(Long id) {
+        if (!SecurityUtils.hasPermission(Permissions.READ_CATEGORY)) {
+            throw new PermissionDeniedException("You don't have permission to view categories");
+        }
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category doesn't exist."));
         return convertToDTO(category);
     }
 
-    @PreAuthorize("hasAuthority('" + Permissions.CATEGORY_VIEW + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
+    @PreAuthorize("hasAuthority('" + Permissions.READ_CATEGORY + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ResponseEntity<Map<String, Object>> getAll(String query, Pageable pageable) {
-        if (!SecurityUtils.hasPermission(Permissions.CATEGORY_VIEW)) {
+        if (!SecurityUtils.hasPermission(Permissions.READ_CATEGORY)) {
             throw new PermissionDeniedException("You don't have permission to view categories");
         }
 
@@ -535,9 +538,9 @@ public class CategoryService {
         return ResponseEntity.ok(response);
     }
 
-    @PreAuthorize("hasAuthority('" + Permissions.CATEGORY_MANAGE + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
+    @PreAuthorize("hasAuthority('" + Permissions.DELETE_CATEGORY + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ResponseEntity<String> delete(Long id) {
-        if (!SecurityUtils.hasPermission(Permissions.CATEGORY_MANAGE)) {
+        if (!SecurityUtils.hasPermission(Permissions.DELETE_CATEGORY)) {
             throw new PermissionDeniedException("You don't have permission to delete categories");
         }
 

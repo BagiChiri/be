@@ -1,4 +1,11 @@
+/*
+ * com.pos.be.repository.transaction.TransactionRepository.java
+ */
 package com.pos.be.repository.transaction;
 
-public interface TransactionRepository {
+import com.pos.be.entity.transaction.Transaction;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
+public interface TransactionRepository extends JpaRepository<Transaction, Long>, JpaSpecificationExecutor<Transaction> {
 }
