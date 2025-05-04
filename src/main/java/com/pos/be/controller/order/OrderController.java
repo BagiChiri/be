@@ -135,9 +135,8 @@ public class OrderController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('" + Permissions.UPDATE_ORDER + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
-    public ConsignmentDTO updateOrder(@PathVariable Long id, @RequestBody ConsignmentDTO consignmentDTO) {
-        Consignment entityToUpdate = consignmentMapper.toEntity(consignmentDTO);
-        return consignmentMapper.toDTO(orderService.updateOrder(id, entityToUpdate));
+    public ResponseEntity<?> updateOrder(@PathVariable Long id, @RequestBody ConsignmentDTO consignmentDTO) {
+        return orderService.updateOrder(id, consignmentDTO);
     }
 
     @DeleteMapping("/{id}")
