@@ -8,5 +8,6 @@ import java.util.Optional;
 
 public interface AuthorityRepository extends JpaRepository<Authority, Integer> {
     Optional<Authority> findByName(String authorityName);
+    boolean existsByName(String name);
 }
 

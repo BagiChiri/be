@@ -7,8 +7,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,5 +27,38 @@ public interface ConsignmentRepository extends JpaRepository<Consignment, Long>,
     Page<Consignment> findByCustomerNameContainingIgnoreCase(
             String customerName,
             Pageable pageable
+    );
+
+    @Query("""
+      SELECT 
+        CASE 
+          WHEN :interval = 'daily'   THEN FUNCTION('DATE_FORMAT', c.consignmentDate, '%Y-%m-%d')
+          WHEN :interval = 'monthly' THEN FUNCTION('DATE_FORMAT', c.consignmentDate, '%Y-%m')
+          WHEN :interval = 'yearly'  THEN FUNCTION('DATE_FORMAT', c.consignmentDate, '%Y')
+        END,
+        c.consignmentStatus,
+        COUNT(c)
+      FROM Consignment c
+      WHERE c.consignmentDate >= :fromDate
+        AND c.consignmentDate <  :toDate
+        AND c.consignmentStatus IS NOT NULL
+      GROUP BY 
+        CASE 
+          WHEN :interval = 'daily'   THEN FUNCTION('DATE_FORMAT', c.consignmentDate, '%Y-%m-%d')
+          WHEN :interval = 'monthly' THEN FUNCTION('DATE_FORMAT', c.consignmentDate, '%Y-%m')
+          WHEN :interval = 'yearly'  THEN FUNCTION('DATE_FORMAT', c.consignmentDate, '%Y')
+        END,
+        c.consignmentStatus
+      ORDER BY 
+        CASE 
+          WHEN :interval = 'daily'   THEN FUNCTION('DATE_FORMAT', c.consignmentDate, '%Y-%m-%d')
+          WHEN :interval = 'monthly' THEN FUNCTION('DATE_FORMAT', c.consignmentDate, '%Y-%m')
+          WHEN :interval = 'yearly'  THEN FUNCTION('DATE_FORMAT', c.consignmentDate, '%Y')
+        END
+    """)
+    List<Object[]> countConsignmentsByStatusInterval(
+            @Param("interval") String interval,
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate")   LocalDateTime toDate
     );
 }

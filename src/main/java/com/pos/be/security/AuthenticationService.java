@@ -7,9 +7,7 @@ import com.pos.be.security.controller.LoginRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -48,6 +46,8 @@ public class AuthenticationService {
             return new AuthResponse(loginRequest.getUsername(), token);
         } catch (BadCredentialsException ex) {
             throw new BadCredentialsException("Invalid username or password");
+        } catch (DisabledException e) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You aren't not allowed to access the system.", e);
         } catch (Exception e) {
             System.err.println("Unexpected error during authentication: " + e.getMessage());
             e.printStackTrace();

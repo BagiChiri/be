@@ -13,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -39,6 +41,8 @@ public class AuthController {
         try {
             return authenticationService.authenticate(loginRequest);
         } catch (BadCredentialsException e) {
+            throw e;
+        } catch (DisabledException e) {
             throw e;
         } catch (Exception e) {
             throw e;
