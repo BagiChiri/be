@@ -7,6 +7,7 @@ import com.pos.be.dto.sales.PaymentMethodChartDTO;
 import com.pos.be.entity.transaction.Transaction;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -103,5 +104,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
             @Param("to") LocalDateTime to
     );
 
-
+    @Modifying
+    @Query("DELETE FROM Transaction tx WHERE tx.consignment.consignmentId = :consignmentId")
+    void deleteByConsignmentId(@Param("consignmentId") Long consignmentId);
 }

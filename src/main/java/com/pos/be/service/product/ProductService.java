@@ -559,6 +559,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Service
 @RequiredArgsConstructor
@@ -1043,5 +1044,17 @@ public class ProductService {
                 .categoryIds(categoryIds)
                 .images(imageDTOs)
                 .build();
+    }
+
+    public List<ProductDTO> findAllById(List<Long> ids) {
+        // repository.findAllById(Iterable<ID>) returns Iterable<Product>
+        List<Product> products = StreamSupport
+                .stream(productRepository.findAllById(ids).spliterator(), false)
+                .collect(Collectors.toList());
+
+        // map to DTO
+        return products.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 }

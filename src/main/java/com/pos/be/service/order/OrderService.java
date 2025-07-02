@@ -2,6 +2,7 @@ package com.pos.be.service.order;
 
 import com.pos.be.component.ConsignmentMapper;
 import com.pos.be.dto.order.ConsignmentDTO;
+import com.pos.be.dto.order.ConsignmentItemDTO;
 import com.pos.be.entity.order.Consignment;
 import com.pos.be.entity.order.ConsignmentItem;
 import com.pos.be.entity.order.ConsignmentStatus;
@@ -16,6 +17,7 @@ import com.pos.be.security.rbac.Permissions;
 import com.pos.be.security.rbac.SecurityUtils;
 import com.pos.be.service.TransactionService;
 import com.pos.be.specification.GenericSpecification;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,6 +32,8 @@ import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -240,92 +244,106 @@ public class OrderService {
 //        deleteOrder(existing.getConsignmentId());
 //        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 //    }
-    public ResponseEntity<?> updateOrder(Long id, ConsignmentDTO updatedConsignmentDTO) {
+    @Transactional
+    public ResponseEntity<?> updateOrder(Long id, ConsignmentDTO dto) {
         // 1) Permission check
         if (!SecurityUtils.hasPermission(Permissions.UPDATE_ORDER)) {
             throw new PermissionDeniedException("You don't have permission to update orders");
         }
 
-        // 2) Map incoming DTO → entity, fetch existing
-        Consignment updatedConsignment = consignmentMapper.toEntity(updatedConsignmentDTO);
-        Consignment existing = getOrderById(id);
+        // 2) Load existing, managed entity
+        Consignment consignment = consignmentRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Order not found: " + id));
 
-        existing.setConsignmentNumber(updatedConsignment.getConsignmentNumber());
-        existing.setConsignmentStatus(updatedConsignment.getConsignmentStatus());
-        existing.setConsignmentDate(updatedConsignment.getConsignmentDate());
-
-        // 3) Build a lookup of old quantities by PRODUCT ID
-        Map<Long, Integer> existingQtyByProduct = new HashMap<>();
-        for (ConsignmentItem ci : existing.getConsignmentItems()) {
-            existingQtyByProduct.put(
-                    ci.getProduct().getProduct_id(),
-                    ci.getQuantity()
-            );
+        // 3) If no items in the incoming request → restore stock + delete entire order
+        if (dto.getOrderItems() == null || dto.getOrderItems().isEmpty()) {
+            // 3a) Restore stock for each existing item
+            for (ConsignmentItem ci : consignment.getConsignmentItems()) {
+                Long productId = ci.getProduct().getProduct_id();
+                Product product = productRepository.findById(productId)
+                        .orElseThrow(() -> new EntityNotFoundException("Product not found: " + productId));
+                product.setQuantity(product.getQuantity() + ci.getQuantity());
+                productRepository.save(product);
+            }
+            // 3b) Delete the consignment (cascade/orphanRemoval removes items)
+            consignmentRepository.delete(consignment);
+            return ResponseEntity.noContent().build();
         }
 
-        // 4) Clear all items; we’ll re-attach nonzero ones
-        existing.getConsignmentItems().clear();
+        // 4) Update top-level fields
+        consignment.setConsignmentNumber(dto.getConsignmentNumber());
+        consignment.setConsignmentStatus(dto.getConsignmentStatus());
+        consignment.setConsignmentDate(dto.getOrderDate());
+        consignment.setCustomerName(dto.getCustomerName());
+        // …any other metadata…
 
-        double totalPrice = 0.0;
+        // 5) Build lookups for existing items
+        Map<Long, ConsignmentItem> existingByItemId = consignment.getConsignmentItems().stream()
+                .collect(Collectors.toMap(ConsignmentItem::getId, Function.identity()));
 
-        // 5) Process each incoming item
-        if (updatedConsignment.getConsignmentItems() != null) {
-            for (ConsignmentItem incomingItem : updatedConsignment.getConsignmentItems()) {
-                Long pid = incomingItem.getProduct().getProduct_id();
-                int newQty = incomingItem.getQuantity();
-                int oldQty = existingQtyByProduct.getOrDefault(pid, 0);
-                int delta  = newQty - oldQty;
+        Map<Long, Integer> oldQtyByProduct = consignment.getConsignmentItems().stream()
+                .collect(Collectors.toMap(
+                        ci -> ci.getProduct().getProduct_id(),
+                        ConsignmentItem::getQuantity
+                ));
 
-                // --- ZERO-QTY BRANCH: remove completely ---
-                if (newQty == 0) {
-                    // restore entire oldQty back into product stock
-                    Product p0 = productRepository.findById(pid)
-                            .orElseThrow(() -> new RuntimeException("Product not found"));
-                    p0.setQuantity(p0.getQuantity() + oldQty);
-                    productRepository.save(p0);
-                    // do NOT add this item to existing.getConsignmentItems()
-                    continue;
+        // 6) Merge incoming items
+        List<ConsignmentItem> mergedItems = new ArrayList<>();
+        for (ConsignmentItemDTO itemDto : dto.getOrderItems()) {
+            Long itemId    = itemDto.getId();
+            Long productId = itemDto.getProductId();
+            int  newQty    = itemDto.getQuantity();
+            int  oldQty    = oldQtyByProduct.getOrDefault(productId, 0);
+            int  delta     = newQty - oldQty;
+
+            // 6a) Adjust stock
+            Product product = productRepository.findById(productId)
+                    .orElseThrow(() -> new EntityNotFoundException("Product not found: " + productId));
+            if (delta > 0) {
+                if (product.getQuantity() < delta) {
+                    throw new RuntimeException("Not enough stock for product " + productId);
                 }
+                product.setQuantity(product.getQuantity() - delta);
+            } else if (delta < 0) {
+                product.setQuantity(product.getQuantity() + (-delta));
+            }
+            productRepository.save(product);
 
-                // --- NONZERO QTY: adjust stock by delta ---
-                Product prod = productRepository.findById(pid)
-                        .orElseThrow(() -> new RuntimeException("Product not found"));
-
-                if (delta > 0) {
-                    // user wants to reserve more stock
-                    if (prod.getQuantity() < delta) {
-                        throw new RuntimeException("Insufficient stock for product ID " + pid);
-                    }
-                    prod.setQuantity(prod.getQuantity() - delta);
-                    productRepository.save(prod);
-                } else if (delta < 0) {
-                    // user reduced their order → return stock
-                    prod.setQuantity(prod.getQuantity() + (-delta));
-                    productRepository.save(prod);
+            // 6b) Update or create the item
+            if (itemId != null) {
+                ConsignmentItem existing = existingByItemId.get(itemId);
+                if (existing == null) {
+                    throw new EntityNotFoundException("Order item not found: " + itemId);
                 }
-                // else delta == 0 → no stock change
-
-                // attach incoming item to the consignment
-                incomingItem.setConsignment(existing);
-                existing.getConsignmentItems().add(incomingItem);
-
-                // accumulate price
-                totalPrice += incomingItem.getPrice() * newQty;
+                existing.setQuantity(newQty);
+                existing.setPrice(itemDto.getPrice());
+                mergedItems.add(existing);
+            } else {
+                ConsignmentItem created = new ConsignmentItem();
+                created.setProduct(product);
+                created.setQuantity(newQty);
+                created.setPrice(itemDto.getPrice());
+                created.setConsignment(consignment);
+                mergedItems.add(created);
             }
         }
 
-        // 6) If any items remain, save; otherwise delete the consignment entirely
-        if (!existing.getConsignmentItems().isEmpty()) {
-            existing.setTotalPrice(totalPrice);
-            Consignment saved = consignmentRepository.save(existing);
-            return ResponseEntity.ok(consignmentMapper.toDTO(saved));
-        } else {
-            // no items → delete the order
-            deleteOrder(existing.getConsignmentId());
-            return ResponseEntity.noContent().build();
-        }
+        // 7) Replace the collection (orphanRemoval=true will delete removed items)
+        consignment.getConsignmentItems().clear();
+        consignment.getConsignmentItems().addAll(mergedItems);
+
+        // 8) Recalculate total price
+        double total = mergedItems.stream()
+                .mapToDouble(ci -> ci.getPrice() * ci.getQuantity())
+                .sum();
+        consignment.setTotalPrice(total);
+
+        // 9) Save and return
+        Consignment saved = consignmentRepository.save(consignment);
+        return ResponseEntity.ok(consignmentMapper.toDTO(saved));
     }
 
+    @Transactional
     @PreAuthorize("hasAuthority('" + Permissions.DELETE_ORDER + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public void deleteOrder(Long id) {
         // Additional service-level permission check
@@ -334,6 +352,10 @@ public class OrderService {
         }
 
         Consignment consignment = getOrderById(id);
+
+        consignmentItemRepository.deleteByConsignmentId(id);
+        transactionRepository.deleteByConsignmentId(id);
+
         consignmentRepository.delete(consignment);
     }
 

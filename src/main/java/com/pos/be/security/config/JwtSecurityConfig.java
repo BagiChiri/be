@@ -37,6 +37,7 @@ import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import javax.sql.DataSource;
@@ -210,10 +211,23 @@ public class JwtSecurityConfig {
                 @Override
                 public void addCorsMappings(CorsRegistry registry) {
                     registry.addMapping("/**")
-                            .allowedOrigins("http://localhost:3000")
+                            .allowedOrigins("http://192.168.100.15:3000", "*")
+//                            .allowedOrigins("http://localhost:3000")
                             .allowedMethods("*");
                 }
             };
         }
     }
+
+    @Configuration
+    public class WebConfig implements WebMvcConfigurer {
+
+        @Override
+        public void addResourceHandlers(ResourceHandlerRegistry registry) {
+            // Maps URL path /uploads/products/** to the file system directory C:/uploads/products/
+            registry.addResourceHandler("/uploads/products/**")
+                    .addResourceLocations("file:C:/uploads/products/");
+        }
+    }
+
 }

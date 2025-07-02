@@ -101,6 +101,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/products")
@@ -191,6 +193,23 @@ public class ProductController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Unexpected error while getting products: " + ex.getMessage());
         }
+    }
+
+    /**
+     * GET /api/products?ids=1&ids=2&ids=3
+     * Returns exactly those products as DTOs.
+     */
+    @GetMapping("/ordered_products")
+    public ResponseEntity<List<ProductDTO>> getByIds(
+            @RequestParam List<Long> ids
+    ) {
+        if (ids.isEmpty()) {
+            return ResponseEntity
+                    .badRequest()
+                    .build();
+        }
+        List<ProductDTO> dtos = productService.findAllById(ids);
+        return ResponseEntity.ok(dtos);
     }
 
     @GetMapping("/by_category/{categoryId}")

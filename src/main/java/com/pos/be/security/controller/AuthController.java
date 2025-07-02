@@ -15,6 +15,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -68,7 +69,7 @@ public class AuthController {
 
     @PostMapping("/signup")
     // Update AuthenticationService.java
-    public String register(User user) throws RoleNotFoundException {
+    public String register(@RequestBody User user) throws RoleNotFoundException {
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
             throw new IllegalArgumentException("Username already exists!");
         }
@@ -83,9 +84,9 @@ public class AuthController {
                     .orElseThrow(() -> new RoleNotFoundException("Default role not found"));
             user.getRoles().add(defaultRole);
         }
-
+        User loogedInUser = userRepository.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName()).get();
         // For admin registration (should be protected)
-        if (user.getRoles().stream().anyMatch(r -> r.getName().equals(Roles.ADMIN))) {
+        if (loogedInUser.getRoles().stream().anyMatch(r -> r.getName().equals(Roles.ADMIN))) {
             if (!SecurityUtils.hasAnyRole(Roles.ADMIN)) {
                 throw new AccessDeniedException("Only admins can create admin users");
             }
