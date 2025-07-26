@@ -31,3 +31,11 @@ build/
 
 ### VS Code ###
 .vscode/
+
+*.properties
+.env
+hs_err_pid1776.log
+hs_err_pid2816.log
+images
+uploads
+research
