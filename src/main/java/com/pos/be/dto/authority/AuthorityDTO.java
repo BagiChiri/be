@@ -1,6 +1,5 @@
 package com.pos.be.dto.authority;
 
-
 import lombok.Data;
 
 @Data

@@ -1,57 +1,3 @@
-//package com.pos.be.controller.order;
-//
-//import com.pos.be.entity.order.Order;
-//import com.pos.be.service.order.OrderService;
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.data.domain.Page;
-//import org.springframework.web.bind.annotation.*;
-//
-//@RestController
-//@RequestMapping("/api/order")
-//@CrossOrigin // Adjust the CORS settings as needed
-//public class OrderController {
-//
-//    private final OrderService orderService;
-//
-//    @Autowired
-//    public OrderController(OrderService orderService) {
-//        this.orderService = orderService;
-//    }
-//
-//    // Endpoint to get paginated orders, with optional search by order number
-//    @GetMapping("/by_name")
-//    public Page<Order> getOrders(
-//            @RequestParam(defaultValue = "0") int page,
-//            @RequestParam(defaultValue = "12") int size,
-//            @RequestParam(required = false) String query
-//    ) {
-//        return orderService.getOrders(page, size, query);
-//    }
-//
-//    // Endpoint to fetch an order by its ID
-//    @GetMapping("/by_id/{id}")
-//    public Order getOrderById(@PathVariable Long id) {
-//        return orderService.getOrderById(id);
-//    }
-//
-//    // Create a new order
-//    @PostMapping
-//    public Order createOrder(@RequestBody Order order) {
-//        return orderService.createOrder(order);
-//    }
-//
-//    // Update an existing order
-//    @PutMapping("/{id}")
-//    public Order updateOrder(@PathVariable Long id, @RequestBody Order order) {
-//        return orderService.updateOrder(id, order);
-//    }
-//
-//    // Delete an order
-//    @DeleteMapping("/{id}")
-//    public void deleteOrder(@PathVariable Long id) {
-//        orderService.deleteOrder(id);
-//    }
-//}
 package com.pos.be.controller.order;
 
 import com.pos.be.component.ConsignmentMapper;
@@ -63,13 +9,9 @@ import com.pos.be.mappers.TransactionMapper;
 import com.pos.be.request.ConsignmentStatusUpdateRequest;
 import com.pos.be.security.rbac.Permissions;
 import com.pos.be.service.order.OrderService;
-import com.pos.be.specification.GenericSpecification;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -112,7 +54,6 @@ public class OrderController {
         return consignmentMapper.toDTO(orderService.getOrderByOrderNumber(consignmentNumber));
     }
 
-    /** Order only **/
     @PostMapping
     public ResponseEntity<ConsignmentDTO> placeOrder(
             @RequestBody ConsignmentDTO dto
@@ -122,14 +63,13 @@ public class OrderController {
         return ResponseEntity.ok(consignmentMapper.toDTO(saved));
     }
 
-    /** Order + immediate payment **/
     @PostMapping("/with-payment")
     public ResponseEntity<ConsignmentDTO> placeOrderWithPayment(
             @RequestBody OrderWithPaymentDTO payload
     ) {
-        Consignment cons   = consignmentMapper.toEntity(payload.getOrder());
-        Transaction tx     = transactionMapper.toEntity(payload.getPayment());
-        Consignment saved  = orderService.createOrder(cons, tx);
+        Consignment cons = consignmentMapper.toEntity(payload.getOrder());
+        Transaction tx = transactionMapper.toEntity(payload.getPayment());
+        Consignment saved = orderService.createOrder(cons, tx);
         return ResponseEntity.ok(consignmentMapper.toDTO(saved));
     }
 

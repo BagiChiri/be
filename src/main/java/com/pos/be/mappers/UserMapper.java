@@ -1,13 +1,11 @@
 package com.pos.be.mappers;
 
 import com.pos.be.dto.user.UserDTO;
-import com.pos.be.entity.user.Authority;
 import com.pos.be.entity.user.Role;
 import com.pos.be.entity.user.User;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
@@ -37,7 +35,7 @@ public class UserMapper {
         if (user.getAuthorities() != null) {
             dto.setAuthorities(
                     user.getAuthorities().stream()
-                            .map(a -> a.getAuthority())  // 'authorities' is a Set<Authority>, which has getName()
+                            .map(a -> a.getAuthority())
                             .collect(Collectors.toSet())
             );
 
@@ -60,7 +58,6 @@ public class UserMapper {
         user.setUsername(dto.getUsername());
         user.setEnabled(dto.getEnabled());
 
-        // We ignore password, roles, authorities as they are managed separately
         user.setRoles(new HashSet<>());
         user.setAuthorities(new HashSet<>());
 

@@ -1,4 +1,3 @@
-// com.pos.be.security.rbac.CustomPermissionEvaluator.java
 package com.pos.be.security.rbac;
 
 import org.springframework.security.access.PermissionEvaluator;
@@ -7,7 +6,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
-import java.util.Collection;
 
 @Component
 public class CustomPermissionEvaluator implements PermissionEvaluator {
@@ -27,13 +25,11 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
             return false;
         }
 
-        // Check for full access
         if (auth.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals(Permissions.FULL_ACCESS))) {
             return true;
         }
 
-        // Check for specific permission
         return auth.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch(p -> p.equals(permission));

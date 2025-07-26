@@ -49,7 +49,7 @@ public class JwtCookieAuthenticationFilter extends OncePerRequestFilter {
             }
         }
 
-        filterChain.doFilter(request, response);  // Continue filter chain
+        filterChain.doFilter(request, response);
     }
 
     private String getJwtFromCookies(HttpServletRequest request) {

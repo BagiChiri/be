@@ -1,11 +1,10 @@
-// src/main/java/com/pos/be/service/impl/AuthorityServiceImpl.java
 package com.pos.be.service.authority;
 
 import com.pos.be.entity.user.Authority;
+import com.pos.be.exception.PermissionDeniedException;
 import com.pos.be.exception.ResourceNotFoundException;
 import com.pos.be.repository.user.AuthorityRepository;
 import com.pos.be.security.rbac.Permissions;
-import com.pos.be.exception.PermissionDeniedException;
 import com.pos.be.security.rbac.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,7 +15,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class AuthorityService{
+public class AuthorityService {
     private final AuthorityRepository authorityRepository;
 
     public List<Authority> findAll() {

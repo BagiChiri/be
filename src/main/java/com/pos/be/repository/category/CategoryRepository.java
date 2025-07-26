@@ -18,7 +18,6 @@ public interface CategoryRepository extends CrudRepository<Category, Long>, Pagi
 
     Optional<Category> findByName(String name);
 
-
     @Query("""
             SELECT c, COUNT(p)
             FROM Category c 

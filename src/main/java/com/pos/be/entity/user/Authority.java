@@ -2,7 +2,6 @@ package com.pos.be.entity.user;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -29,8 +28,6 @@ public class Authority {
     @ManyToMany(mappedBy = "authorities")
     @JsonIgnore
     private Set<User> users = new HashSet<>();
-
-
 
     public Authority(String name) {
         this.name = name;

@@ -32,15 +32,14 @@ public class Consignment {
     private ConsignmentStatus consignmentStatus;
 
     @OneToMany(mappedBy = "consignment", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference // Prevents recursion during serialization
+    @JsonManagedReference
     private List<ConsignmentItem> consignmentItems = new ArrayList<>();
 
     @OneToOne(mappedBy = "consignment", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private Transaction transaction;
 
-    // Helper method to add items
-    public void addConsignmentItem(ConsignmentItem item) {
+     public void addConsignmentItem(ConsignmentItem item) {
         consignmentItems.add(item);
         item.setConsignment(this);
     }

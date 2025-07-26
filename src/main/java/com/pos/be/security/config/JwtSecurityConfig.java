@@ -17,7 +17,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -51,9 +50,9 @@ import java.util.UUID;
 
 @Configuration
 @EnableMethodSecurity(
-        prePostEnabled = true,  // Enables @PreAuthorize, @PostAuthorize
-        securedEnabled = true,  // Enables @Secured
-        jsr250Enabled = true    // Enables @RolesAllowed (JSR-250)
+        prePostEnabled = true,
+        securedEnabled = true,
+        jsr250Enabled = true
 )
 @RequiredArgsConstructor
 public class JwtSecurityConfig {
@@ -83,25 +82,10 @@ public class JwtSecurityConfig {
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(authenticationEntryPoint()))
-//                .addFilterBefore(new JwtCookieAuthenticationFilter(applicationContext.getBean("jwtDecoder", JwtDecoder.class)), UsernamePasswordAuthenticationFilter.class)
                 .cors(Customizer.withDefaults())
                 .build();
     }
 
-//    @Bean
-//    public WebMvcConfigurer corsConfigurer() {
-//        return new WebMvcConfigurer() {
-//            @Override
-//            public void addCorsMappings(CorsRegistry registry) {
-//                registry.addMapping("/**")
-//                        .allowedMethods("*")
-//                        .allowCredentials(true)
-//                        .allowedOrigins("http://localhost:3000", "http://localhost:4200");
-//            }
-//        };
-//    }
-
-    // Update in JwtSecurityConfig.java
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
@@ -212,7 +196,6 @@ public class JwtSecurityConfig {
                 public void addCorsMappings(CorsRegistry registry) {
                     registry.addMapping("/**")
                             .allowedOrigins("http://192.168.100.15:3000", "*")
-//                            .allowedOrigins("http://localhost:3000")
                             .allowedMethods("*");
                 }
             };
@@ -224,7 +207,6 @@ public class JwtSecurityConfig {
 
         @Override
         public void addResourceHandlers(ResourceHandlerRegistry registry) {
-            // Maps URL path /uploads/products/** to the file system directory C:/uploads/products/
             registry.addResourceHandler("/uploads/products/**")
                     .addResourceLocations("file:C:/uploads/products/");
         }

@@ -25,6 +25,8 @@ public class DataInitializer implements CommandLineRunner {
 
     private final RoleRepository roleRepository;
     private final AuthorityRepository authorityRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     @Override
@@ -51,55 +53,46 @@ public class DataInitializer implements CommandLineRunner {
             List<Authority> authorities = Arrays.asList(
                     new Authority(Permissions.FULL_ACCESS),
 
-                    // Product
                     new Authority(Permissions.CREATE_PRODUCT),
                     new Authority(Permissions.READ_PRODUCT),
                     new Authority(Permissions.UPDATE_PRODUCT),
                     new Authority(Permissions.DELETE_PRODUCT),
 
-                    // Category
                     new Authority(Permissions.CREATE_CATEGORY),
                     new Authority(Permissions.READ_CATEGORY),
                     new Authority(Permissions.UPDATE_CATEGORY),
                     new Authority(Permissions.DELETE_CATEGORY),
 
-                    // Order
                     new Authority(Permissions.CREATE_ORDER),
                     new Authority(Permissions.READ_ORDER),
                     new Authority(Permissions.UPDATE_ORDER),
                     new Authority(Permissions.DELETE_ORDER),
 
-                    // User
                     new Authority(Permissions.CREATE_USER),
                     new Authority(Permissions.READ_USER),
                     new Authority(Permissions.UPDATE_USER),
                     new Authority(Permissions.DELETE_USER),
 
-                    //Transaction
                     new Authority(Permissions.CREATE_TRANSACTION),
                     new Authority(Permissions.READ_TRANSACTION),
                     new Authority(Permissions.UPDATE_TRANSACTION),
                     new Authority(Permissions.DELETE_TRANSACTION),
 
-                    // Role
                     new Authority(Permissions.CREATE_ROLE),
                     new Authority(Permissions.READ_ROLE),
                     new Authority(Permissions.UPDATE_ROLE),
                     new Authority(Permissions.DELETE_ROLE),
 
-                    // Permission / Authority
                     new Authority(Permissions.CREATE_PERMISSION),
                     new Authority(Permissions.READ_PERMISSION),
                     new Authority(Permissions.UPDATE_PERMISSION),
                     new Authority(Permissions.DELETE_PERMISSION),
 
-                    // Merchant Store
                     new Authority(Permissions.CREATE_MERCHANT),
                     new Authority(Permissions.READ_MERCHANT),
                     new Authority(Permissions.UPDATE_MERCHANT),
                     new Authority(Permissions.DELETE_MERCHANT),
 
-                    // Customer (optional)
                     new Authority(Permissions.CREATE_CUSTOMER),
                     new Authority(Permissions.READ_CUSTOMER),
                     new Authority(Permissions.UPDATE_CUSTOMER),
@@ -110,9 +103,6 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-
     public void initializeUsers() {
         initializeAdminUser();
         initializeSalesUser();
@@ -121,7 +111,6 @@ public class DataInitializer implements CommandLineRunner {
 
     private void initializeAdminUser() {
         if (!userRepository.existsByUsername("admin")) {
-            // Get all authorities
             Set<Authority> allPermissions = new HashSet<>(authorityRepository.findAll());
 
             Role adminRole = roleRepository.findByName(Roles.ADMIN)
@@ -194,6 +183,7 @@ public class DataInitializer implements CommandLineRunner {
             System.out.println("==============================================");
         }
     }
+
     private void initializeInventoryUser() {
         if (!userRepository.existsByUsername("inventory")) {
             Set<Authority> inventoryPermissions = new HashSet<>();

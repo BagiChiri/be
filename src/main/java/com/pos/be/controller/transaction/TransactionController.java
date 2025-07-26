@@ -1,6 +1,3 @@
-/*
- * com.pos.be.controller.transaction.TransactionController.java
- */
 package com.pos.be.controller.transaction;
 
 import com.pos.be.dto.transactions.TransactionDTO;

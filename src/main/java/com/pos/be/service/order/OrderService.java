@@ -49,10 +49,8 @@ public class OrderService {
     private static String generateOrderNumber() {
         String prefix = "ORD";
 
-        // Format: YYYYMMDDHHMMSS
         String timeStamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
 
-        // Generate a 4-digit random number
         int randomNum = 1000 + new Random().nextInt(9000);
 
         return prefix + "-" + timeStamp + "-" + randomNum;
@@ -79,46 +77,6 @@ public class OrderService {
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + id));
     }
 
-//    @Transactional
-//    @PreAuthorize("hasAuthority('" + Permissions.CREATE_ORDER + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
-//    public Consignment createOrder(Consignment consignment) {
-//        // Additional service-level permission check
-//        if (!SecurityUtils.hasPermission(Permissions.CREATE_ORDER)) {
-//            throw new PermissionDeniedException("You don't have permission to create orders");
-//        }
-//
-//        consignment.setConsignmentDate(LocalDateTime.now());
-//        consignment.setConsignmentStatus(consignment.getConsignmentStatus() == null ? ConsignmentStatus.PENDING : consignment.getConsignmentStatus());
-//        consignment.setConsignmentNumber(generateOrderNumber());
-//        consignment = consignmentRepository.save(consignment);
-//
-//        double totalPrice = 0.0;
-//        List<ConsignmentItem> items = new ArrayList<>();
-//
-//        if (consignment.getConsignmentItems() != null) {
-//            for (ConsignmentItem item : consignment.getConsignmentItems()) {
-//                var product = productRepository.findById(item.getProduct().getProduct_id())
-//                        .orElseThrow(() -> new RuntimeException("Product not found"));
-//
-//                if (product.getQuantity() < item.getQuantity()) {
-//                    throw new RuntimeException("Not enough stock for product: " + product.getProduct_id());
-//                }
-//
-//                product.setQuantity(product.getQuantity() - item.getQuantity());
-//                productRepository.save(product);
-//
-//                item.setConsignment(consignment);
-//                totalPrice += item.getPrice() * item.getQuantity();
-//                items.add(consignmentItemRepository.save(item));
-//            }
-//        }
-//
-//        consignment.setConsignmentItems(items);
-//        consignment.setTotalPrice(totalPrice);
-//        consignmentItemRepository.saveAll(items);
-//        return consignmentRepository.save(consignment);
-//    }
-
     @PreAuthorize("hasAuthority('" + Permissions.READ_ORDER + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public Consignment getOrderByOrderNumber(String orderNumber) {
         // Additional service-level permission check
@@ -130,18 +88,12 @@ public class OrderService {
                 .orElseThrow(() -> new RuntimeException("Order not found with consignmentNumber: " + orderNumber));
     }
 
-    /**
-     * Order-only flow
-     **/
     @Transactional
     @PreAuthorize("hasAuthority('CREATE_ORDER') or hasAuthority('FULL_ACCESS')")
     public Consignment createOrder(Consignment consignment) {
         return createOrder(consignment, null);
     }
 
-    /**
-     * Order + immediate payment flow
-     **/
     @Transactional
     @PreAuthorize("hasAuthority('CREATE_ORDER') or hasAuthority('FULL_ACCESS')")
     public Consignment createOrder(Consignment consignment, Transaction payment) {
@@ -155,7 +107,6 @@ public class OrderService {
         consignment.setConsignmentNumber(generateOrderNumber());
         consignment = consignmentRepository.save(consignment);
 
-        // — handle items & stock —
         double total = 0.0;
         List<ConsignmentItem> savedItems = new ArrayList<>();
         for (ConsignmentItem item : consignment.getConsignmentItems()) {
@@ -175,7 +126,6 @@ public class OrderService {
         consignment.setTotalPrice(total);
         consignmentRepository.save(consignment);
 
-        // — optional immediate payment —
         if (payment != null) {
             payment.setConsignment(consignment);
             payment.setTotalAmount(BigDecimal.valueOf(total));
@@ -186,78 +136,16 @@ public class OrderService {
     }
 
     @PreAuthorize("hasAuthority('" + Permissions.UPDATE_ORDER + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
-//    public ResponseEntity<?> updateOrder(Long id, ConsignmentDTO updatedConsignmentDTO) {
-//        // Additional service-level permission check
-//        if (!SecurityUtils.hasPermission(Permissions.UPDATE_ORDER)) {
-//            throw new PermissionDeniedException("You don't have permission to update orders");
-//        }
-//        Consignment updatedConsignment = consignmentMapper.toEntity(updatedConsignmentDTO);
-//        Consignment existing = getOrderById(id);
-//        existing.setConsignmentNumber(updatedConsignment.getConsignmentNumber());
-//        existing.setConsignmentStatus(updatedConsignment.getConsignmentStatus());
-//        existing.setConsignmentDate(updatedConsignment.getConsignmentDate());
-//
-//        Map<Long, Integer> existingConsignmentItems = new HashMap<>();
-//        existing.getConsignmentItems().forEach(
-//                (items) -> existingConsignmentItems.put(items.getConsignment().getConsignmentId(), items.getQuantity())
-//        );
-//
-//        existing.getConsignmentItems().clear();
-//
-//        double totalPrice = 0.0;
-//        Product product = new Product();
-//
-//        if (updatedConsignment.getConsignmentItems() != null) {
-////            totalPrice = existing.getTotalPrice();
-//            for (ConsignmentItem item : updatedConsignment.getConsignmentItems()) {
-//                product = productRepository.findById(item.getProduct().getProduct_id()).orElseThrow(
-//                        () -> new RuntimeException("Product not found")
-//                );
-//                double currentOrderItemPrice = item.getPrice();
-//                item.setConsignment(existing);
-//                currentOrderItemPrice += product.getPrice() * item.getQuantity();
-//                totalPrice += currentOrderItemPrice;
-//                existing.getConsignmentItems().add(item);
-//
-//                int updateQuantity = item.getQuantity() - existingConsignmentItems.get(item.getConsignment().getConsignmentId());
-//                if (updateQuantity > 0) {
-//                    if (product.getQuantity() < updateQuantity) {
-//                        throw new RuntimeException("Insufficient stock");
-//                    }
-//                    product.setQuantity(product.getQuantity() - updateQuantity);
-//                    productRepository.save(product);
-//                } else if (updateQuantity < 0) {
-//                    product.setQuantity(product.getQuantity() + (updateQuantity * (-1)));
-//                    productRepository.save(product);
-//                } else {
-//                    consignmentItemRepository.delete(item);
-//                    existing.getConsignmentItems().remove(item);
-//                    product.setQuantity(product.getQuantity() + item.getQuantity());
-//                    productRepository.save(product);
-//                }
-//            }
-//        }
-//        if (!existing.getConsignmentItems().isEmpty()) {
-//            existing.setTotalPrice(totalPrice);
-//            return new ResponseEntity<>(consignmentMapper.toDTO(consignmentRepository.save(existing)), HttpStatus.OK);
-//        }
-//        deleteOrder(existing.getConsignmentId());
-//        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-//    }
     @Transactional
     public ResponseEntity<?> updateOrder(Long id, ConsignmentDTO dto) {
-        // 1) Permission check
         if (!SecurityUtils.hasPermission(Permissions.UPDATE_ORDER)) {
             throw new PermissionDeniedException("You don't have permission to update orders");
         }
 
-        // 2) Load existing, managed entity
         Consignment consignment = consignmentRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found: " + id));
 
-        // 3) If no items in the incoming request → restore stock + delete entire order
         if (dto.getOrderItems() == null || dto.getOrderItems().isEmpty()) {
-            // 3a) Restore stock for each existing item
             for (ConsignmentItem ci : consignment.getConsignmentItems()) {
                 Long productId = ci.getProduct().getProduct_id();
                 Product product = productRepository.findById(productId)
@@ -265,19 +153,15 @@ public class OrderService {
                 product.setQuantity(product.getQuantity() + ci.getQuantity());
                 productRepository.save(product);
             }
-            // 3b) Delete the consignment (cascade/orphanRemoval removes items)
             consignmentRepository.delete(consignment);
             return ResponseEntity.noContent().build();
         }
 
-        // 4) Update top-level fields
         consignment.setConsignmentNumber(dto.getConsignmentNumber());
         consignment.setConsignmentStatus(dto.getConsignmentStatus());
         consignment.setConsignmentDate(dto.getOrderDate());
         consignment.setCustomerName(dto.getCustomerName());
-        // …any other metadata…
 
-        // 5) Build lookups for existing items
         Map<Long, ConsignmentItem> existingByItemId = consignment.getConsignmentItems().stream()
                 .collect(Collectors.toMap(ConsignmentItem::getId, Function.identity()));
 
@@ -287,16 +171,14 @@ public class OrderService {
                         ConsignmentItem::getQuantity
                 ));
 
-        // 6) Merge incoming items
         List<ConsignmentItem> mergedItems = new ArrayList<>();
         for (ConsignmentItemDTO itemDto : dto.getOrderItems()) {
-            Long itemId    = itemDto.getId();
+            Long itemId = itemDto.getId();
             Long productId = itemDto.getProductId();
-            int  newQty    = itemDto.getQuantity();
-            int  oldQty    = oldQtyByProduct.getOrDefault(productId, 0);
-            int  delta     = newQty - oldQty;
+            int newQty = itemDto.getQuantity();
+            int oldQty = oldQtyByProduct.getOrDefault(productId, 0);
+            int delta = newQty - oldQty;
 
-            // 6a) Adjust stock
             Product product = productRepository.findById(productId)
                     .orElseThrow(() -> new EntityNotFoundException("Product not found: " + productId));
             if (delta > 0) {
@@ -309,7 +191,6 @@ public class OrderService {
             }
             productRepository.save(product);
 
-            // 6b) Update or create the item
             if (itemId != null) {
                 ConsignmentItem existing = existingByItemId.get(itemId);
                 if (existing == null) {
@@ -328,17 +209,14 @@ public class OrderService {
             }
         }
 
-        // 7) Replace the collection (orphanRemoval=true will delete removed items)
         consignment.getConsignmentItems().clear();
         consignment.getConsignmentItems().addAll(mergedItems);
 
-        // 8) Recalculate total price
         double total = mergedItems.stream()
                 .mapToDouble(ci -> ci.getPrice() * ci.getQuantity())
                 .sum();
         consignment.setTotalPrice(total);
 
-        // 9) Save and return
         Consignment saved = consignmentRepository.save(consignment);
         return ResponseEntity.ok(consignmentMapper.toDTO(saved));
     }
@@ -346,7 +224,6 @@ public class OrderService {
     @Transactional
     @PreAuthorize("hasAuthority('" + Permissions.DELETE_ORDER + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public void deleteOrder(Long id) {
-        // Additional service-level permission check
         if (!SecurityUtils.hasPermission(Permissions.DELETE_ORDER)) {
             throw new PermissionDeniedException("You don't have permission to delete orders");
         }
@@ -398,5 +275,4 @@ public class OrderService {
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body("Consignment with number: " + consignmentNumber + " not found."));
     }
-
 }

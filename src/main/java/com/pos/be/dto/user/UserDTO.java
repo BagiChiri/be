@@ -1,7 +1,7 @@
 package com.pos.be.dto.user;
 
-
 import lombok.Data;
+
 import java.util.Set;
 
 @Data

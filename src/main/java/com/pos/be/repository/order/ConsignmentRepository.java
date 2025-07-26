@@ -16,49 +16,50 @@ import java.util.Optional;
 
 @Repository
 public interface ConsignmentRepository extends JpaRepository<Consignment, Long>, JpaSpecificationExecutor<Consignment> {
-    // No need for order-item methods here.
     List<Consignment> consignmentId(Long consignmentId);
+
     @Query("SELECT COUNT(ci) > 0 FROM ConsignmentItem ci WHERE ci.product.product_id = ?1")
     boolean existsConsignmentByProductId(Long productId);
 
     long countByConsignmentStatus(ConsignmentStatus consignmentStatus);
 
     Optional<Consignment> findByConsignmentNumber(String consignmentNumber);
+
     Page<Consignment> findByCustomerNameContainingIgnoreCase(
             String customerName,
             Pageable pageable
     );
 
     @Query("""
-      SELECT 
-        CASE 
-          WHEN :interval = 'daily'   THEN FUNCTION('DATE_FORMAT', c.consignmentDate, '%Y-%m-%d')
-          WHEN :interval = 'monthly' THEN FUNCTION('DATE_FORMAT', c.consignmentDate, '%Y-%m')
-          WHEN :interval = 'yearly'  THEN FUNCTION('DATE_FORMAT', c.consignmentDate, '%Y')
-        END,
-        c.consignmentStatus,
-        COUNT(c)
-      FROM Consignment c
-      WHERE c.consignmentDate >= :fromDate
-        AND c.consignmentDate <  :toDate
-        AND c.consignmentStatus IS NOT NULL
-      GROUP BY 
-        CASE 
-          WHEN :interval = 'daily'   THEN FUNCTION('DATE_FORMAT', c.consignmentDate, '%Y-%m-%d')
-          WHEN :interval = 'monthly' THEN FUNCTION('DATE_FORMAT', c.consignmentDate, '%Y-%m')
-          WHEN :interval = 'yearly'  THEN FUNCTION('DATE_FORMAT', c.consignmentDate, '%Y')
-        END,
-        c.consignmentStatus
-      ORDER BY 
-        CASE 
-          WHEN :interval = 'daily'   THEN FUNCTION('DATE_FORMAT', c.consignmentDate, '%Y-%m-%d')
-          WHEN :interval = 'monthly' THEN FUNCTION('DATE_FORMAT', c.consignmentDate, '%Y-%m')
-          WHEN :interval = 'yearly'  THEN FUNCTION('DATE_FORMAT', c.consignmentDate, '%Y')
-        END
-    """)
+              SELECT 
+                CASE 
+                  WHEN :interval = 'daily'   THEN FUNCTION('DATE_FORMAT', c.consignmentDate, '%Y-%m-%d')
+                  WHEN :interval = 'monthly' THEN FUNCTION('DATE_FORMAT', c.consignmentDate, '%Y-%m')
+                  WHEN :interval = 'yearly'  THEN FUNCTION('DATE_FORMAT', c.consignmentDate, '%Y')
+                END,
+                c.consignmentStatus,
+                COUNT(c)
+              FROM Consignment c
+              WHERE c.consignmentDate >= :fromDate
+                AND c.consignmentDate <  :toDate
+                AND c.consignmentStatus IS NOT NULL
+              GROUP BY 
+                CASE 
+                  WHEN :interval = 'daily'   THEN FUNCTION('DATE_FORMAT', c.consignmentDate, '%Y-%m-%d')
+                  WHEN :interval = 'monthly' THEN FUNCTION('DATE_FORMAT', c.consignmentDate, '%Y-%m')
+                  WHEN :interval = 'yearly'  THEN FUNCTION('DATE_FORMAT', c.consignmentDate, '%Y')
+                END,
+                c.consignmentStatus
+              ORDER BY 
+                CASE 
+                  WHEN :interval = 'daily'   THEN FUNCTION('DATE_FORMAT', c.consignmentDate, '%Y-%m-%d')
+                  WHEN :interval = 'monthly' THEN FUNCTION('DATE_FORMAT', c.consignmentDate, '%Y-%m')
+                  WHEN :interval = 'yearly'  THEN FUNCTION('DATE_FORMAT', c.consignmentDate, '%Y')
+                END
+            """)
     List<Object[]> countConsignmentsByStatusInterval(
             @Param("interval") String interval,
             @Param("fromDate") LocalDateTime fromDate,
-            @Param("toDate")   LocalDateTime toDate
+            @Param("toDate") LocalDateTime toDate
     );
 }

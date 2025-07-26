@@ -1,6 +1,5 @@
 package com.pos.be.component;
 
-
 import com.pos.be.dto.order.ConsignmentDTO;
 import com.pos.be.dto.order.ConsignmentItemDTO;
 import com.pos.be.entity.order.Consignment;
@@ -18,6 +17,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ConsignmentMapper {
 
+    private final ProductRepository productRepository;
+
     @Transactional
     public ConsignmentDTO toDTO(Consignment entity) {
         if (entity == null) {
@@ -34,13 +35,12 @@ public class ConsignmentMapper {
         if (entity.getConsignmentItems() != null) {
             dto.setOrderItems(
                     entity.getConsignmentItems().stream()
-                            .map(this::toDTO)  // map each OrderItem -> OrderItemDTO
+                            .map(this::toDTO)
                             .collect(Collectors.toList())
             );
         }
         return dto;
     }
-
 
     public Consignment toEntity(ConsignmentDTO dto) {
         if (dto == null) {
@@ -58,17 +58,13 @@ public class ConsignmentMapper {
         if (dto.getOrderItems() != null) {
             for (ConsignmentItemDTO itemDTO : dto.getOrderItems()) {
                 ConsignmentItem itemEntity = toEntity(itemDTO);
-                itemEntity.setConsignment(entity); // 🔹 Ensure OrderItem has a parent Order
+                itemEntity.setConsignment(entity);
                 consignmentItems.add(itemEntity);
             }
         }
         entity.setConsignmentItems(consignmentItems);
         return entity;
     }
-
-
-
-    // OrderItem <-> OrderItemDTO
 
     public ConsignmentItemDTO toDTO(ConsignmentItem item) {
         if (item == null) {
@@ -85,7 +81,6 @@ public class ConsignmentMapper {
         return dto;
     }
 
-    private final ProductRepository productRepository;
     public ConsignmentItem toEntity(ConsignmentItemDTO dto) {
         if (dto == null) {
             return null;
@@ -95,12 +90,9 @@ public class ConsignmentMapper {
         item.setId(dto.getId());
         item.setQuantity(dto.getQuantity());
         item.setPrice(dto.getPrice());
-        // The actual Product entity should be fetched if you need it,
-        // e.g. via a ProductRepository. For now, we only store productId in the DTO.
         return item;
     }
 
-    // For converting lists or pages, you can add a helper method if needed
     public List<ConsignmentDTO> toDTOList(List<Consignment> entities) {
         return entities.stream().map(this::toDTO).collect(Collectors.toList());
     }

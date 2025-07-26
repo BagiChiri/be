@@ -1,4 +1,3 @@
-// com.pos.be.security.rbac.SecurityUtils.java
 package com.pos.be.security.rbac;
 
 import org.springframework.security.core.Authentication;
@@ -19,13 +18,11 @@ public class SecurityUtils {
 
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
 
-        // Check for full access
         if (authorities.stream().anyMatch(a -> a.getAuthority().equals(Permissions.FULL_ACCESS))) {
             return true;
         }
 
-        // Check for specific permission
-        return authorities.stream()
+         return authorities.stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch(p -> p.equals(permission));
     }

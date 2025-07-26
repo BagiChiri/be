@@ -1,11 +1,10 @@
-// src/main/java/com/pos/be/service/impl/RoleServiceImpl.java
 package com.pos.be.service.role;
 
 import com.pos.be.entity.user.Role;
+import com.pos.be.exception.PermissionDeniedException;
 import com.pos.be.exception.ResourceNotFoundException;
 import com.pos.be.repository.user.RoleRepository;
 import com.pos.be.security.rbac.Permissions;
-import com.pos.be.exception.PermissionDeniedException;
 import com.pos.be.security.rbac.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,7 +15,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class RoleService  {
+public class RoleService {
     private final RoleRepository roleRepository;
 
     public List<Role> findAll() {

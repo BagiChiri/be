@@ -83,7 +83,6 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
-    // lock user
     @PutMapping("/{id}/lock")
     @PreAuthorize("hasAuthority('" + Permissions.UPDATE_USER + "') or hasAuthority('" + Permissions.FULL_ACCESS + "')")
     public ResponseEntity<Void> lock(@PathVariable Integer id) {
@@ -91,23 +90,26 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
-    // password reset request
-    @Data static class ResetRequest { private String email; }
-
     @PostMapping("/password-reset-request")
     public ResponseEntity<Void> requestReset(@RequestBody ResetRequest r) {
         userService.initiatePasswordReset(r.getEmail());
         return ResponseEntity.accepted().build();
     }
 
-    // password reset confirm
-    @Data
-    static class ResetConfirm { private String token, newPassword; }
-
     @PostMapping("/password-reset-confirm")
     public ResponseEntity<Void> confirmReset(@RequestBody ResetConfirm c) {
         userService.confirmPasswordReset(c.getToken(), c.getNewPassword());
         return ResponseEntity.ok().build();
+    }
+
+    @Data
+    static class ResetRequest {
+        private String email;
+    }
+
+    @Data
+    static class ResetConfirm {
+        private String token, newPassword;
     }
 
 }

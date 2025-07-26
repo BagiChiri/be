@@ -5,11 +5,11 @@ import com.pos.be.entity.user.Authority;
 import com.pos.be.exception.PermissionDeniedException;
 import com.pos.be.security.rbac.Permissions;
 import com.pos.be.security.rbac.SecurityUtils;
+import com.pos.be.service.authority.AuthorityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import com.pos.be.service.authority.AuthorityService;
 
 import java.util.List;
 

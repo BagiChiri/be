@@ -1,7 +1,6 @@
 package com.pos.be.entity.order;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.pos.be.entity.product.Product;
 import jakarta.persistence.*;
 import lombok.*;
@@ -21,7 +20,7 @@ public class ConsignmentItem {
     // Reference to parent Order
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "consignment_id")
-    @JsonBackReference // Prevents recursion during serialization
+    @JsonBackReference
     private Consignment consignment;
 
     // Reference to the purchased Product

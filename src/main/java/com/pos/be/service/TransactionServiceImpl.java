@@ -57,18 +57,14 @@ public class TransactionServiceImpl implements TransactionService {
         }
         tx.setTransactionDate(LocalDateTime.now());
 
-        // If it’s a card payment, call the gateway
         if (tx.getPaymentMethod() == PaymentMethod.CARD) {
-            // Assuming the cardPaymentGateway is injected into the service
             String ref = cardPaymentGateway.processCardPayment(
                     tx.getCardTrackData(),  // Card track data sent from the front end
                     tx.getPaidAmount()      // Amount for the transaction
             );
 
-            // Set the reference number from the gateway
             tx.setReferenceNumber(ref);
             tx.setProcessedByUsername(SecurityContextHolder.getContext().getAuthentication().getName());
-            // Set transaction status as completed after successful payment
             tx.setStatus(TransactionStatus.COMPLETED);
         }
 
@@ -83,7 +79,6 @@ public class TransactionServiceImpl implements TransactionService {
             throw new PermissionDeniedException("You don't have permission to update transactions");
         }
         Transaction existing = getTransactionById(id);
-        // only update mutable fields
         existing.setPaidAmount(transaction.getPaidAmount());
         existing.setChangeAmount(transaction.getChangeAmount());
         existing.setStatus(transaction.getStatus());

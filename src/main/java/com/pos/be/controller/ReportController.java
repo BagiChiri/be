@@ -42,6 +42,7 @@ public class ReportController {
     ) {
         return ResponseEntity.ok(svc.getPaymentMethodsChart(interval, from, to));
     }
+
     @GetMapping("/transaction-statuses")
     public ResponseEntity<List<TransactionStatusStatsDTO>> getTransactionStatuses() {
         return ResponseEntity.ok(svc.getTransactionStatusStats());

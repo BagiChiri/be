@@ -24,9 +24,6 @@ public class ProductImage implements PrimaryImageFlag {
     @Column(nullable = false)
     private String url;
 
-    /**
-     * Field to store the original filename coming from the upload.
-     */
     private String originalFilename;
 
     @Column(nullable = false)
@@ -36,7 +33,6 @@ public class ProductImage implements PrimaryImageFlag {
     @JoinColumn(name = "product_id")
     private Product product;
 
-    // Custom constructor for convenience.
     public ProductImage(@NotNull @NotBlank String url, String originalFilename, boolean primaryImage, Product product) {
         this.url = url;
         this.originalFilename = originalFilename;

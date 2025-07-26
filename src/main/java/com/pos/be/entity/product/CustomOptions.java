@@ -36,7 +36,7 @@ public class CustomOptions {
             foreignKey = @ForeignKey(foreignKeyDefinition = "FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE")
     )
     @JsonIgnore
-    private Product product;//*
+    private Product product;
 
     public CustomOptions(String optionLabel, String optionType, List<String> optionValue, Product product) {
         this.optionLabel = optionLabel;

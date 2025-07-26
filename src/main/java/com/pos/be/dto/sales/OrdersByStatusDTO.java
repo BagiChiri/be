@@ -11,5 +11,4 @@ import java.util.Map;
 public class OrdersByStatusDTO {
     private List<String> labels;
     private Map<String, List<Long>> series;
-    // key = status name, value = list of counts aligned with labels
 }

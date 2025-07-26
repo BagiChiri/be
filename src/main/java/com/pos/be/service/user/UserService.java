@@ -8,16 +8,11 @@ import com.pos.be.repository.user.PasswordResetTokenRepository;
 import com.pos.be.repository.user.UserRepository;
 import com.pos.be.security.rbac.Permissions;
 import com.pos.be.security.rbac.SecurityUtils;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -28,14 +23,11 @@ import java.util.UUID;
 public class UserService {
 
     private final UserRepository userRepository;
-
-    public UserRepository.UserProfile profile(String username) {
-        return userRepository.getUserProfile(username);
-    }
-
     private final PasswordResetTokenRepository tokenRepo;
     private final JavaMailSender mailSender;
     private final PasswordEncoder passwordEncoder;
+    @Value("${app.resetTokenExpiryMinutes:15}")
+    private int expiryMinutes;
 
     public UserService(UserRepository userRepository, PasswordResetTokenRepository tokenRepo, JavaMailSender mailSender, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
@@ -44,8 +36,9 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    @Value("${app.resetTokenExpiryMinutes:15}")
-    private int expiryMinutes;
+    public UserRepository.UserProfile profile(String username) {
+        return userRepository.getUserProfile(username);
+    }
 
     public List<User> findAll() {
         if (!SecurityUtils.hasPermission(Permissions.READ_USER)) {
@@ -84,7 +77,6 @@ public class UserService {
         existing.setGender(user.getGender());
         existing.setAddress(user.getAddress());
         existing.setEnabled(user.isEnabled());
-        // username/password left unchanged here
         return userRepository.save(existing);
     }
 

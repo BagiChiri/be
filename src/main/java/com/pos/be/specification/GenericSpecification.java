@@ -1,12 +1,8 @@
 package com.pos.be.specification;
 
-import com.pos.be.entity.order.Consignment;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.From;
-import jakarta.persistence.criteria.Path;
+import jakarta.persistence.criteria.*;
 import org.springframework.data.jpa.domain.Specification;
 
-import jakarta.persistence.criteria.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -37,7 +33,7 @@ public class GenericSpecification<T> implements Specification<T> {
             if (innerPredicates.size() == 1) {
                 combined = innerPredicates.get(0);
             } else {
-                combined = cb.or(innerPredicates.toArray(new Predicate[0])); // OR for multi-values
+                combined = cb.or(innerPredicates.toArray(new Predicate[0]));
             }
 
             combinedPredicates.add(combined);

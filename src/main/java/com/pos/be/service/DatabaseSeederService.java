@@ -36,10 +36,8 @@ public class DatabaseSeederService {
 
     @Transactional
     public void seedDatabase() {
-        // Insert specific Users
         insertUsers();
 
-        // Insert 12,000 records for other entities
         insertProducts();
         insertCategories();
         seedProductCategoryRelationships();
@@ -114,7 +112,7 @@ public class DatabaseSeederService {
 
         Random random = new Random();
         for (Product product : products) {
-            int numCategories = random.nextInt(5) + 1; // Each product gets 1-5 categoryIds
+            int numCategories = random.nextInt(5) + 1;
             Set<Category> assignedCategories = new HashSet<>();
 
             for (int i = 0; i < numCategories; i++) {

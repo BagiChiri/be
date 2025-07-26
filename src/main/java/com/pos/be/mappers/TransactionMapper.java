@@ -1,6 +1,5 @@
 package com.pos.be.mappers;
 
-
 import com.pos.be.dto.transactions.TransactionDTO;
 import com.pos.be.entity.transaction.Transaction;
 import org.mapstruct.Mapper;

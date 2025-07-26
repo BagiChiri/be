@@ -14,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
-import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -57,7 +56,7 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid Authorization header format");
             }
 
-            String token = authHeader.substring(7); // Remove "Bearer " prefix
+            String token = authHeader.substring(7);
             Jwt decodedJwt = jwtDecoder.decode(token);
 
             return ResponseEntity.ok()
@@ -85,7 +84,6 @@ public class AuthController {
             user.getRoles().add(defaultRole);
         }
         User loogedInUser = userRepository.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName()).get();
-        // For admin registration (should be protected)
         if (loogedInUser.getRoles().stream().anyMatch(r -> r.getName().equals(Roles.ADMIN))) {
             if (!SecurityUtils.hasAnyRole(Roles.ADMIN)) {
                 throw new AccessDeniedException("Only admins can create admin users");
