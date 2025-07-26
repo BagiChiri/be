@@ -1,1 +1,0 @@
-check for id in update and delete operations. If no id is specified that operation must be rejected in consignment to save other records from update or deletion.
